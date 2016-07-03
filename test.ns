@@ -1,0 +1,37 @@
+var p =>(var){
+  var x =>(me){
+    me = me + 2
+    var y = (me * ( .10 + 20.3 * 5. ))
+    return y
+  }
+  return x
+}
+
+var x (){return 45}
+var nums = [[5],(){var x=2 print("WORKING!!!")},7,8,9,10]
+
+for index,num in nums array {
+  print("my language now!")
+}
+for i from 18 to 25 by 4 {
+  print(i)
+}
+print(5,4,6,7)
+print(print(5,4,p(6)(10)),6,7)
+var tryit = [(x){return [(){return 4}]}]
+print(tryit[1](0)[1]())
+
+var q = 6
+if q < 5 {
+  print(q)
+}
+or q < 10 {
+  print(q)
+}
+else{
+  print("else statement")
+}
+--print((x){return x}(5))
+--nums[2]()
+--print(nums[1][1])
+--print(print(5+x(),4,p(6)(10)),6,7)
