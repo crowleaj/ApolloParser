@@ -1,5 +1,5 @@
-var p =>(var){
-  var x =>(me){
+var p = (){
+  var x = (me){
     me = me + 2
     var y = (me * ( .10 + 20.3 * 5. ))
     return y
@@ -28,7 +28,7 @@ if q < 5 {
 or q < 10 {
   print(q)
 }
-else{
+else {
   print("else statement")
 }
 --print((x){return x}(5))

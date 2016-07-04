@@ -78,7 +78,7 @@ local cfg = lpeg.P{
     ((lvar * wsCs *
     (
       ("=" * wsCs * (lpeg.V"ltablelookup" + lpeg.V"larith" + lval + lpeg.V"ltable")) 
-      + ((lpeg.P("=>")/"=") * wsCs * lpeg.V"lfunc")))
+      + ("=" * wsCs * lpeg.V"lfunc")))
   + ((lvar/function(...) return ... .. "=" end) * wsCs * lpeg.V"lfunc")) *wsNl,
     
   ldecl = lpeg.Cs(((llocal + lglobal) * wsOne * lpeg.V"lassignment")),
