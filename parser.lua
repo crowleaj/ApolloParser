@@ -71,7 +71,7 @@ local opOverload = lpeg.P(
 
 local cfg = lpeg.P{
   "S",
-  S = (lcomment + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + (lpeg.V"lfunccall" * wsNl) + lpeg.V"ltablelookup")^1,
+  S = (lcomment + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + (lpeg.V"lfunccall" * wsNl) + lpeg.V"ltablelookup")^1,
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -139,13 +139,13 @@ lif =
   (
     ((lpeg.V"lbody"/
         function(...) return "then\n" .. ... end)  * 
-      (((lpeg.P"or"/"elseif") * wsOne * (lpeg.V"lfunccall" + lval) * wsCs * lcompare * ws * (lpeg.V"lfunccall" + lval) * wsOne * 
-        (lpeg.V"lbody"/
+       (((lpeg.P"or"/"elseif") * wsOne * (lpeg.V"lfunccall" + lval) * wsCs * lcompare * ws * (lpeg.V"lfunccall" + lval) * wsOne * 
+      (lpeg.V"lbody"/
         function(...) return "then\n" .. ... end))^0) *
-      (lpeg.P"else"/"else\n") * (lpeg.V"lbody"/
+      (lpeg.P"else"/"else\n") * wsOne * (lpeg.V"lbody"/
         function(...) return ... .. "end\n" end)
   )
-    +(lpeg.P"else"/"else\n") * (lpeg.V"lbody"/
+    +(lpeg.P"else"/"else\n") * wsOne * (lpeg.V"lbody"/
         function(...) return ... .. "end\n" end)
     +(lpeg.V"lbody"/
       function(...) return "then\n" .. ... .. "end" end)
@@ -154,6 +154,8 @@ lif =
 ltablebrackets = ("[" * lval * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccallparams" * lpeg.V"ltablebrackets"))^-1)),
 
 ltablelookup = lvar*lpeg.V"ltablebrackets",
+
+lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * "}" * ws)/function (cname) return cname .. "={}\n" end),
 }
 function runfile(file,output)
   local f = io.open(file, "rb")

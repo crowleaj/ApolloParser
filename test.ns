@@ -18,8 +18,9 @@ for i from 18 to 25 by 4 {
 }
 print(5,4,6,7)
 print(print(5,4,p(6)(10)),6,7)
-var tryit = [(x){return [(){return 4}]}]
+var tryit = [(x){return [(){ return 4}]}]
 print(tryit[1](0)[1]())
+
 
 var q = 6
 if q < 5 {
@@ -31,6 +32,23 @@ or q < 10 {
 else {
   print("else statement")
 }
+
+class Entity {
+
+}
+--x = 0, y = 0
+--name
+
+--Entity(name){
+--	this:name = name
+--}
+
+--move = (x,y){
+--	this:x = x
+--	this:y = y
+--}
+--Entity m("Alice")
+
 --print((x){return x}(5))
 --nums[2]()
 --print(nums[1][1])
