@@ -7,7 +7,7 @@ var p = (){
   return x
 }
 
-var x (){return 45}
+var x = (){return 45}
 var nums = [[5],(){var x=2 print("WORKING!!!")},7,8,9,10]
 
 for index,num in nums array {
@@ -33,15 +33,18 @@ else {
   print("else statement")
 }
 
-class Entity {
-
+class Entity { 
+	
+		x = 0, y = 0
+		foo
+		
+		Entity(name){
+			print(name)
+		}
 }
---x = 0, y = 0
+--this:name = name
+--
 --name
-
---Entity(name){
---	this:name = name
---}
 
 --move = (x,y){
 --	this:x = x

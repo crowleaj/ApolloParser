@@ -5,7 +5,7 @@ local retsp = retval(" ")
 local noret = retval("")
 local newln = retval("\n")
 
-local ws = (lpeg.P(" ") +"\n")^0
+local ws = ((lpeg.P(" ") + "\n"+"\t")^0)
 local wsCs = (ws/noret)
 local wsOne =  (ws/retsp)
 local wsNl = (ws/"\n")
@@ -13,7 +13,7 @@ local lnum = lpeg.C(((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." 
 local lstring = lpeg.C(("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))
 
 local lconst = (lnum + lstring)
-local lvar = lpeg.C(("_" + lpeg.R("az", "AZ")) * ("_" + lpeg.R("az", "AZ", "09"))^0)
+local lvar = lpeg.C(("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))
 local lval = lconst+lvar
 local lnumval = lnum+lvar
 
@@ -25,7 +25,7 @@ local lcomment = lpeg.Cs("--" * ((lpeg.P(1) - "\n")^0) * "\n" * wsCs)
 local lfuncvars = lpeg.Cs( 
   "(" * wsCs * 
   (
-    (((lval * wsCs * ","* wsCs)^0) * lval) 
+    (((lvar * wsCs * ","* wsCs)^0) * lvar) 
     + wsCs
   ) * wsCs * 
   ")")
@@ -155,7 +155,48 @@ ltablebrackets = ("[" * lval * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccal
 
 ltablelookup = lvar*lpeg.V"ltablebrackets",
 
-lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * "}" * ws)/function (cname) return cname .. "={}\n" end),
+lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
+function ( ... ) return {...} end) + lvar)  * ws * (lpeg.P(",")^-1) * ws)^0) * ws * "}" * ws)/
+function (cname,var) 
+  local assignments = {}
+  local constructor = nil
+  local functions = {}
+  for _,v in pairs(var) do 
+    if type(v) == "table" then
+      print(#v) 
+      if #v == 1 then 
+        print(v[1])
+        table.insert(assignments,table.concat(v[1]))
+      elseif v[1] == cname then
+        print(v[1]== cname)
+        constructor = v
+      else
+        table.insert(functions,table.concat(v))
+      end
+    end
+  end 
+  for _,v in ipairs(constructor) do 
+    print(v)
+  end
+  if constructor ~= nil then
+    constructor[1] =  "function " .. cname .. ":__init"
+    local fcn = {}
+    for k,v in ipairs(constructor) do
+      table.insert(fcn,v)
+      if k == 2 then
+        table.insert(fcn,"\nlocal this ={")
+        for _,decl in ipairs(assignments) do
+          table.insert(fcn,decl .. ",")
+        end
+        table.insert(fcn,"} setmetatable(this, self)")
+      end
+    end
+    fcn[#fcn] = "return this\nend\n"
+    return cname .."={}\n" .. table.concat(fcn) .. cname .. ".__index=" .. cname .. "\n" 
+  else
+    return cname .. "={ }\n" .. cname .. ".__index=" .. cname .. "\n" 
+  end
+end),
 }
 function runfile(file,output)
   local f = io.open(file, "rb")
