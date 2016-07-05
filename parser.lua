@@ -1,4 +1,5 @@
 require "lpeg"
+local inspect = require "inspect"
 
 local retval = function(val) return val end
 local retsp = retval(" ")
@@ -9,40 +10,48 @@ local ws = ((lpeg.P(" ") + "\n"+"\t")^0)
 local wsCs = (ws/noret)
 local wsOne =  (ws/retsp)
 local wsNl = (ws/"\n")
-local lnum = lpeg.C(((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))
-local lstring = lpeg.C(("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))
+local lnum = ((((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
+  function (num) return {type = "numberconst",val = num} end)
+local lstring = ((("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))/
+  function  (string) return {type = "stringconst", val = string}  end
+)
 
 local lconst = (lnum + lstring)
-local lvar = lpeg.C(("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))
+local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
+  function(var) return {type = "variable", val = var} end)
+local lvarclass = ((lpeg.P"this:" * ("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
+  function(var) return {type = "classvariable", val = var} end)
+local lvar = lvarclass + lvarnorm
 local lval = lconst+lvar
 local lnumval = lnum+lvar
 
-local llocal = ("var" * ws) / retval("local ")
-local lglobal = ("gvar" * ws) / noret
+local llocal = ("var" * ws)/retval("local")
+local lglobal = ("gvar" * ws)/retval("global")
 
-local lcomment = lpeg.Cs("--" * ((lpeg.P(1) - "\n")^0) * "\n" * wsCs)
+local lcomment = (("--" * (((lpeg.P(1) - "\n")^0)/retval) * "\n" * wsCs)/
+  function(...) return {type = "comment", val = ...} end)
 
-local lfuncvars = lpeg.Cs( 
-  "(" * wsCs * 
+local lfuncvars =  
+  ("(" * ws * 
   (
-    (((lvar * wsCs * ","* wsCs)^0) * lvar) 
-    + wsCs
-  ) * wsCs * 
-  ")")
-    
---local lfunccall = (lvar * lfuncvars)/function(func,args) return func .. args end
+    (((lvar * ws * ","* ws)^0) * lvar) 
+    + ws
+  ) * ws * 
+  ")")/
+    function(...) if ... == "()" then return {} else return {...} end end
 
-local lfornorm = lpeg.Cs(
-  "for" * wsOne * 
-  lvar * wsCs *
-  (lpeg.P"from"/"=") * wsCs *
-  lnumval * wsCs *
-  (lpeg.P"to"/",") * wsCs * 
-  lnumval * wsCs *
-  ((lpeg.P"by"/"," * wsCs * lnumval)^-1))
+local lfornorm = (
+  "for" * ws * 
+  lvar * ws *
+  lpeg.P"from" * ws *
+  lnumval * ws *
+  lpeg.P"to" * ws * 
+  lnumval * ws *
+  ((lpeg.P"by" * ws * lnumval)^-1))/
+    function (first,last,step) return {type = "fornormal", first = first, last = last, step = (step or {type = "numberconst", val = 1})} end
 
-local lforen = lpeg.Cs(
-  "for" * wsOne * 
+local lforen = (
+  "for" * ws * 
   (
     (lvar * wsCs * "," * wsCs * lvar)
     +((lpeg.P"i"+"k")/
@@ -50,7 +59,7 @@ local lforen = lpeg.Cs(
     +((lvar-(lpeg.P"i"+"k"))/
       function(var) return "_" .. "," .. var end)
   ) 
-  * wsOne * "in " * wsOne * 
+  * ws * "in " * ws * 
   (
     (lvar * ws *
       (
@@ -59,8 +68,10 @@ local lforen = lpeg.Cs(
     ))/
       function(var,iter) return iter .."(" .. var..")" end))
   
-local arithOp = lpeg.C(lpeg.S("*/+-"))
-local lcompare = lpeg.C(lpeg.S("<>") + "<=" + ">=" + "==")
+local arithOp = (lpeg.S("*/+-"))/
+  function (operator) return {type = "operator",val = operator} end
+local lcompare = lpeg.C(lpeg.S("<>") + "<=" + ">=" + "==")/
+  function (operator) return {type = "comparison",val = operator} end
 
 local opOverload = lpeg.P(
   (lvar * ws * arithOp * "=" * ws * lvar)/
@@ -71,30 +82,28 @@ local opOverload = lpeg.P(
 
 local cfg = lpeg.P{
   "S",
-  S = (lcomment + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + (lpeg.V"lfunccall" * wsNl) + lpeg.V"ltablelookup")^1,
+  S = ( lcomment + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + lpeg.V"ltablelookup")^1,--+ (lpeg.V"lfunccall" * ws) 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
-    ((lvar * wsCs *
-    (
-      ("=" * wsCs * (lpeg.V"ltablelookup" + lpeg.V"larith" + lval + lpeg.V"ltable")) 
-      + ("=" * wsCs * lpeg.V"lfunc")))
-  + ((lvar/function(...) return ... .. "=" end) * wsCs * lpeg.V"lfunc")) *wsNl,
-    
-  ldecl = lpeg.Cs(((llocal + lglobal) * wsOne * lpeg.V"lassignment")),
+    ((lvar * ws *
+      ("=" * ws * (lpeg.V"ltablelookup" + lpeg.V"larith" + lval + lpeg.V"ltable" + lpeg.V"lfunc")))/
+        function(var,val) return {type = "assignment", var = var, val = val} end
+      ) *ws,
+
+  ldecl = ((llocal + lglobal) * ws * (lpeg.V"lassignment" + (lvarnorm * ws)))/
+    function(scope,assignment) 
+     if type(assignment) == "string" then return {type = "declaration", var = var}
+     else assignment.type = "declaration" assignment.scope = scope return assignment end end,
 
   lfunccall = lpeg.Cs((lvar * (lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * ((lpeg.V"lfunccallparams")^0) * wsCs)),
   
   lfunc = 
-    (lfuncvars/
-      function(vars) return "function".. vars end) * wsNl * 
-    (lpeg.P"{"/noret) * wsCs *  
-    ((((lpeg.V"lfunccall"/
-            function(...) return ... .. "\n"end) 
-      + lpeg.V"S") * wsCs)^0) * 
-    ((lpeg.V"lreturnstatement"^-1)) * wsCs *
-    (lpeg.P"}"/noret) *
-    (ws/"end"),
+    (lfuncvars  * ws * 
+    "{" * ws *  
+    ((lpeg.V"S" * ws)^0) * 
+    (lpeg.V"lreturnstatement"^-1) * ws *
+    lpeg.P"}" * ws)/ function(vars, ... ) return {type="function", vars = vars, val = {...}}   end,
   
   lfunccallparams = 
     "(" * wsCs * 
@@ -104,7 +113,8 @@ local cfg = lpeg.P{
     + wsCs) *
     ")",
   
-  lreturnstatement = "return" * wsOne * (lpeg.V"ltablelookup" + lpeg.V"ltable" + lpeg.V"lfunc" + lpeg.V"larith" + lval) * wsNl,
+  lreturnstatement = ("return" * ws * (lpeg.V"ltablelookup" + lpeg.V"ltable" + lpeg.V"lfunc" + lpeg.V"larith" + lval) * ws)/
+    function(val) return {type = "return", val = val} end,
   
   larith = 
     (
@@ -153,7 +163,7 @@ lif =
   
 ltablebrackets = ("[" * lval * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccallparams" * lpeg.V"ltablebrackets"))^-1)),
 
-ltablelookup = lvar*lpeg.V"ltablebrackets",
+ltablelookup = lvar * (lpeg.V"ltablebrackets" + ("." * lvar)),
 
 lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
 function ( ... ) return {...} end) + lvar)  * ws * (lpeg.P(",")^-1) * ws)^0) * ws * "}" * ws)/
@@ -163,21 +173,15 @@ function (cname,var)
   local functions = {}
   for _,v in pairs(var) do 
     if type(v) == "table" then
-      print(#v) 
       if #v == 1 then 
-        print(v[1])
         table.insert(assignments,table.concat(v[1]))
       elseif v[1] == cname then
-        print(v[1]== cname)
         constructor = v
       else
         table.insert(functions,table.concat(v))
       end
     end
   end 
-  for _,v in ipairs(constructor) do 
-    print(v)
-  end
   if constructor ~= nil then
     constructor[1] =  "function " .. cname .. ":__init"
     local fcn = {}
@@ -206,15 +210,23 @@ function runfile(file,output)
 end
 
 function run(script,output)
-  local p = lpeg.Cs((cfg)^0):match(script)
-  if output == true then
-      print(p)
+  local p = lpeg.Ct((cfg)^0):match(script)
+  for _, inst in ipairs(p) do
+    local type = inst.type
+    print(inspect(inst))
+    if type == "comment" then
+    elseif type == "assignment" then
+      --print("assignmnt: " .. "var: " .. inspect(inst.var) .. "val: " .. inspect(inst.val))
+    end
   end
-  local chunk, err = assert(loadstring(p))
+  if output == true then
+      --print(p)
+  end
+  --[[local chunk, err = assert(loadstring(p))
   if chunk == nil then
     print(err)
   else
     chunk()
     io.write "\n"
-  end
+  end--]]
 end
