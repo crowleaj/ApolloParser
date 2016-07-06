@@ -8,6 +8,7 @@ var p = (){
 	}
   return x
 }
+var tryit = [(x){return [(){ return 4}]}]
 --
 --name
 --var y = (me * ( .10 + 20.3 * 5. ))

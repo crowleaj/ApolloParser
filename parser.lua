@@ -123,18 +123,19 @@ local cfg = lpeg.P{
         ((ws * arithOp * ws * (lpeg.V"lfunccall" + lnumval))^1)
         + (ws * arithOp * ws * lpeg.V"larithbal")))/
           function ( ... )
-            return {type="arithmetic", val={...}}
+            return {type = "arithmetic", val = {...}}
           end
         )
     + lpeg.V"larithbal",
 
   larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal") * ws * ")" * ws)/
-    function(val) return {type="parentheses", val=val} end,
+    function(val) return {type = "parentheses", val = val} end,
   
-  ltable = lpeg.Cs(
-    (lpeg.P"["/"{") * wsCs * 
-    (((((lpeg.V"ltable" + lpeg.V"lfunccall" + lval + lpeg.V"lfunc") * wsCs* ",")^0) * (lpeg.V"ltable" + lpeg.V"lfunccall" + lval + lpeg.V"lfunc"))+"")  * wsCs *
-    (lpeg.P"]"/"}")),
+  ltable = (
+    "[" * ws * 
+    (((((lpeg.V"ltable" + lpeg.V"lfunccall" + lval + lpeg.V"lfunc") * ws* ",")^0) * (lpeg.V"ltable" + lpeg.V"lfunccall" + lval + lpeg.V"lfunc"))^-1)  * ws *
+    "]")/ 
+      function(...) return {type = "table", val={...}} end,
 
 lforloop = (lforen + lfornorm) * wsOne * lpeg.V"lforbody" * wsNl,
 

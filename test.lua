@@ -33,7 +33,7 @@ for i from 18 to 25 by 2 {
 }
 print(5,4,6,7)
 print(print(5,4,p(6)(10)),6,7)
-var tryit = [(x){return [(){ return 4}]}]
+
 print(tryit[1](0)[1]())
 
 
