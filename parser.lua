@@ -117,14 +117,19 @@ local cfg = lpeg.P{
     function(val) return {type = "return", val = val} end,
   
   larith = 
-    (
+    ((
       (lpeg.V"lfunccall" + lnumval) * 
       (
-        ((wsCs * arithOp * wsCs * (lpeg.V"lfunccall" + lnumval))^1)
-        + (wsCs * arithOp * wsCs *lpeg.V"larithbal")))
+        ((ws * arithOp * ws * (lpeg.V"lfunccall" + lnumval))^1)
+        + (ws * arithOp * ws * lpeg.V"larithbal")))/
+          function ( ... )
+            return {type="arithmetic", val={...}}
+          end
+        )
     + lpeg.V"larithbal",
 
-  larithbal = wsCs * "(" * wsCs * (lpeg.V"larith" + lpeg.V"larithbal") * wsCs * ")",
+  larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal") * ws * ")" * ws)/
+    function(val) return {type="parentheses", val=val} end,
   
   ltable = lpeg.Cs(
     (lpeg.P"["/"{") * wsCs * 

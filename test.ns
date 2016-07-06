@@ -3,12 +3,12 @@ var x = 5
 var y = (foo){return 45}
 var p = (){
 	var x = (me){
-	  var me = me
+	  var me = (me + 2)
 	  return y
 	}
   return x
 }
---+ 2
+--
 --name
 --var y = (me * ( .10 + 20.3 * 5. ))
 --move = (x,y){
