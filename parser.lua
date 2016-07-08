@@ -22,13 +22,13 @@ local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09")
 local lvarclass = ((lpeg.P"this:" * ("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
   function(var) return {type = "classvariable", val = var} end)
 local lvar = lvarclass + lvarnorm
-local lval = lconst+lvar
-local lnumval = lnum+lvar
+local lval = lconst + lvar
+local lnumval = lnum + lvar
 
 local llocal = ("var" * ws)/retval("local")
 local lglobal = ("gvar" * ws)/retval("global")
 
-local lcomment = (("--" * (((lpeg.P(1) - "\n")^0)/retval) * "\n" * wsCs)/
+local lcomment = (("--" * (((lpeg.P(1) - "\n")^0)/retval) * "\n" * ws)/
   function(...) return {type = "comment", val = ...} end)
 
 local lfuncvars =  
@@ -53,11 +53,11 @@ local lfornorm = (
 local lforen = (
   "for" * ws * 
   (
-    (lvar * wsCs * "," * wsCs * lvar)
+    (lvar * ws * "," * ws * lvar)
     +((lpeg.P"i"+"k")/
-      function(index) return index .. "," .. "_" end)
+      function(index) return {k = index, v = "_"} end)
     +((lvar-(lpeg.P"i"+"k"))/
-      function(var) return "_" .. "," .. var end)
+      function(var) return {k = "_", v = var} end)
   ) 
   * ws * "in " * ws * 
   (
@@ -82,7 +82,7 @@ local opOverload = lpeg.P(
 
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + lpeg.V"ltablelookup")^1,--+ (lpeg.V"lfunccall" * ws) 
+  S = ( lcomment + (lpeg.V"lfunccall" * ws) + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + lpeg.V"ltablelookup")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -96,7 +96,8 @@ local cfg = lpeg.P{
      if type(assignment) == "string" then return {type = "declaration", var = var}
      else assignment.type = "declaration" assignment.scope = scope return assignment end end,
 
-  lfunccall = lpeg.Cs((lvar * (lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * ((lpeg.V"lfunccallparams")^0) * wsCs)),
+  lfunccall = ( (lpeg.V"ltablelookup" + lvar) * lpeg.V"lfunccallparams" * ((lpeg.V"lfunccallparams")^0) * ws)/
+    function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
   
   lfunc = 
     (lfuncvars  * ws * 
@@ -106,12 +107,12 @@ local cfg = lpeg.P{
     lpeg.P"}" * ws)/ function(vars, ... ) return {type="function", vars = vars, val = {...}}   end,
   
   lfunccallparams = 
-    "(" * wsCs * 
+    ("(" * ws * 
     ((
-      (((lpeg.V"lfunccall" + lpeg.V"larith" + lval) * wsCs * "," * wsCs)^0) *
-      (lpeg.V"lfunccall" + lpeg.V"larith" + lval) * wsCs) 
-    + wsCs) *
-    ")",
+      (((lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws * "," * ws)^0) *
+      (lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws)^-1) *
+    ")")/
+    function(...) return {type = "params", val = {...}} end,
   
   lreturnstatement = ("return" * ws * (lpeg.V"ltablelookup" + lpeg.V"ltable" + lpeg.V"lfunc" + lpeg.V"larith" + lval) * ws)/
     function(val) return {type = "return", val = val} end,
@@ -137,7 +138,7 @@ local cfg = lpeg.P{
     "]")/ 
       function(...) return {type = "table", val={...}} end,
 
-lforloop = (lforen + lfornorm) * wsOne * lpeg.V"lforbody" * wsNl,
+lforloop = (lforen + lfornorm) * ws * lpeg.V"lforbody" * ws,
 
 lforbody =   
   (lpeg.P"{"/" do\n") * wsCs *  
@@ -167,9 +168,9 @@ lif =
       function(...) return "then\n" .. ... .. "end" end)
     ),
   
-ltablebrackets = ("[" * lval * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccallparams" * lpeg.V"ltablebrackets"))^-1)),
+ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccallparams" * lpeg.V"ltablebrackets"))^-1)),
 
-ltablelookup = lvar * (lpeg.V"ltablebrackets" + ("." * lvar)),
+ltablelookup = lvar * (lpeg.V"ltablebrackets" + ((("." * lvar)^1) * ((lpeg.V"lfunccallparams" + lpeg.V"ltablebrackets")^-1))),
 
 lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
 function ( ... ) return {...} end) + lvar)  * ws * (lpeg.P(",")^-1) * ws)^0) * ws * "}" * ws)/

@@ -9,9 +9,11 @@ var p = (){
   return x
 }
 var tryit = [(x){return [(){ return 4}]}]
+print(hi)
+--var nums = [[5],(){var x=2 print("WORKING!!!")},7,8,9,10]
 --
 --name
---var y = (me * ( .10 + 20.3 * 5. ))
+var y = (me * ( .10 + 20.3 * 5. ))
 --move = (x,y){
 --	this:x = x
 --	this:y = y

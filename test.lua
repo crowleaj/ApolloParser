@@ -23,8 +23,6 @@ m:move(2,3)
 print(m.x)
 print(v.name)--
 
-var nums = [[5],(){var x=2 print("WORKING!!!")},7,8,9,10]
-
 --for index,num in nums array {
 --  print("Testing for loop!")
 --}
