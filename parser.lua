@@ -19,7 +19,7 @@ local lstring = ((("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0)
 local lconst = (lnum + lstring)
 local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
   function(var) return {type = "variable", val = var} end)
-local lvarclass = ((lpeg.P"this:" * ("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
+local lvarclass = lpeg.P"this:" * (( ("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
   function(var) return {type = "classvariable", val = var} end)
 local lvar = lvarclass + lvarnorm
 local lval = lconst + lvar
@@ -209,15 +209,33 @@ end),
 
 function parseAssignment(rhs)
   local type = rhs.type
-  if type == "variable" or type == "numberconst" or type == "stringconst" then
+  if type == "variable" or type == "numberconst" or type == "stringconst" or type == "operator" then
     return rhs.val
   elseif type == "function" then
     return parseFunction(rhs)
   elseif type == "parentheses" then
     local nTree = {}
     table.insert(nTree, "(")
-    table.insert(nTree, inspect(rhs.val))
+    table.insert(nTree, parseAssignment(rhs.val))
     table.insert(nTree, ")")
+    return table.concat(nTree)
+  elseif type == "arithmetic" then
+    local nTree = {}
+    for _,op in ipairs(rhs.val) do
+      table.insert(nTree, parseAssignment(op))
+    end
+    return table.concat(nTree)
+  elseif type == "table" then
+    local nTree = {}
+    table.insert(nTree,"{")
+    for _,arg in ipairs(rhs.val) do
+         table.insert(nTree,parseAssignment(arg))
+         table.insert(nTree,",")
+    end
+    if #rhs.val > 0 then
+      table.remove(nTree)
+    end
+    table.insert(nTree,"}")
     return table.concat(nTree)
   else
     print(type)
@@ -249,7 +267,6 @@ function parseTable(table)
 end
 
 function parseFunction(fcn)
-  print(inspect(fcn))
   local nTree = {}
   table.insert(nTree, "function(")
   for _,v in ipairs(fcn.vars) do
