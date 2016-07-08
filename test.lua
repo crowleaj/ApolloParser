@@ -45,7 +45,6 @@ or q < 10 {
 else {
   print("else statement")
 }
-
 class Entity { 
 	
 		x = 0, y = 0
@@ -55,5 +54,10 @@ class Entity {
 			print(name)
 		}
 		
+		move = (x,y){
+			this:x = x
+			this:y = y
+		}
 		
-}]]
+}
+]]

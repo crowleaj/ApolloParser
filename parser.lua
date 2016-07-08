@@ -10,8 +10,8 @@ local ws = ((lpeg.P(" ") + "\n"+"\t")^0)
 local wsCs = (ws/noret)
 local wsOne =  (ws/retsp)
 local wsNl = (ws/"\n")
-local lnum = ((((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
-  function (num) return {type = "numberconst",val = num} end)
+local lnum = (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
+  function (num) return {type = "numberconst",val = num} end
 local lstring = ((("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))/
   function  (string) return {type = "stringconst", val = string}  end
 )
@@ -38,7 +38,7 @@ local lfuncvars =
     + ws
   ) * ws * 
   ")")/
-    function(...) if ... == "()" then return {} else return {...} end end
+    function(...)  if ... == "()" then return {} else return {...} end end
 
 local lfornorm = (
   "for" * ws * 
@@ -87,14 +87,14 @@ local cfg = lpeg.P{
   
   lassignment = 
     ((lvar * ws *
-      ("=" * ws * (lpeg.V"ltablelookup" + lpeg.V"larith" + lval + lpeg.V"ltable" + lpeg.V"lfunc")))/
+      ("=" * ws * (lpeg.V"ltablelookup" + lpeg.V"ltable" + lpeg.V"lfunc" + lpeg.V"larith" + lval)))/
         function(var,val) return {type = "assignment", var = var, val = val} end
       ) *ws,
 
   ldecl = ((llocal + lglobal) * ws * (lpeg.V"lassignment" + (lvarnorm * ws)))/
     function(scope,assignment) 
-     if type(assignment) == "string" then return {type = "declaration", var = var}
-     else assignment.type = "declaration" assignment.scope = scope return assignment end end,
+     --if type(assignment) == "string" then return {type = "declaration", var = var, val = }
+    assignment.type = "declaration" assignment.scope = scope return assignment end,
 
   lfunccall = ( (lpeg.V"ltablelookup" + lvar) * lpeg.V"lfunccallparams" * ((lpeg.V"lfunccallparams")^0) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
@@ -129,7 +129,7 @@ local cfg = lpeg.P{
         )
     + lpeg.V"larithbal",
 
-  larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal") * ws * ")" * ws)/
+  larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal" + lnumval) * ws * ")" * ws)/
     function(val) return {type = "parentheses", val = val} end,
   
   ltable = (
@@ -141,31 +141,25 @@ local cfg = lpeg.P{
 lforloop = (lforen + lfornorm) * ws * lpeg.V"lforbody" * ws,
 
 lforbody =   
-  (lpeg.P"{"/" do\n") * wsCs *  
-  ((lpeg.V"S" * wsCs)^0) * wsCs * 
-  (lpeg.P"}"/noret) * 
-  (ws/"end"),
+  "{" * ws *  
+  ((lpeg.V"S" * ws)^0) * ws * 
+  lpeg.P"}" * ws,
   
-lbody = lpeg.Cs(
-  (lpeg.P"{"/"") * wsCs *  
-  ((lpeg.V"S" * wsCs)^0) * wsCs * 
-  (lpeg.P"}"/noret) * wsCs),
+lbody = (
+  "{" * ws *  
+  ((lpeg.V"S" * ws)^0) * ws * 
+  lpeg.P"}" * ws),
   
 lif = 
-  "if" * wsOne * (lpeg.V"lfunccall" + lval) * wsCs * lcompare * ws * (lpeg.V"lfunccall" + lval) * wsOne * 
+  "if" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * 
   (
-    ((lpeg.V"lbody"/
-        function(...) return "then\n" .. ... end)  * 
-       (((lpeg.P"or"/"elseif") * wsOne * (lpeg.V"lfunccall" + lval) * wsCs * lcompare * ws * (lpeg.V"lfunccall" + lval) * wsOne * 
-      (lpeg.V"lbody"/
-        function(...) return "then\n" .. ... end))^0) *
-      (lpeg.P"else"/"else\n") * wsOne * (lpeg.V"lbody"/
-        function(...) return ... .. "end\n" end)
+    (lpeg.V"lbody"  * 
+       ((lpeg.P"or" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * 
+      lpeg.V"lbody")^0) *
+      lpeg.P"else" * ws * lpeg.V"lbody"
   )
-    +(lpeg.P"else"/"else\n") * wsOne * (lpeg.V"lbody"/
-        function(...) return ... .. "end\n" end)
-    +(lpeg.V"lbody"/
-      function(...) return "then\n" .. ... .. "end" end)
+    + lpeg.P"else" * ws * lpeg.V"lbody"
+    + lpeg.V"lbody"
     ),
   
 ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccallparams" * lpeg.V"ltablebrackets"))^-1)),
@@ -209,6 +203,98 @@ function (cname,var)
   end
 end),
 }
+
+
+
+
+function parseAssignment(rhs)
+  local type = rhs.type
+  if type == "variable" or type == "numberconst" or type == "stringconst" then
+    return rhs.val
+  elseif type == "function" then
+    return parseFunction(rhs)
+  elseif type == "parentheses" then
+    local nTree = {}
+    table.insert(nTree, "(")
+    table.insert(nTree, inspect(rhs.val))
+    table.insert(nTree, ")")
+    return table.concat(nTree)
+  else
+    print(type)
+    return ""
+  end
+end
+
+function parseFunctionBody(body)
+  local nTree = {}
+  for _,line in ipairs(body) do
+    local type = line.type
+    if type == "return" then
+      table.insert(nTree, "return ")
+      table.insert(nTree, parseAssignment(line.val))
+      table.insert(nTree, "\n")
+    else
+      table.insert(nTree,parseLine(line))
+    end
+  end
+  return table.concat(nTree)
+end
+
+function parseTable(table)
+  local nTree = {}
+  table.insert(nTree,"{")
+  table.insert()
+  table.insert(nTree,"}")
+  return table.concat(nTree)
+end
+
+function parseFunction(fcn)
+  print(inspect(fcn))
+  local nTree = {}
+  table.insert(nTree, "function(")
+  for _,v in ipairs(fcn.vars) do
+    table.insert(nTree, v.val)
+    table.insert(nTree, ",")
+  end
+  if #fcn.vars > 0 then
+    table.remove(nTree)
+  end
+  table.insert(nTree, ")\n")
+  table.insert(nTree, parseFunctionBody(fcn.val))
+  table.insert(nTree, "end")
+  return table.concat(nTree)
+end
+
+function parseLine(line)
+  local nTree = {}
+  local type = line.type
+  if type == "assignment" then
+    table.insert(nTree, line.var.val)
+    table.insert(nTree, "=")
+    table.insert(nTree, parseAssignment(line.val))
+    table.insert(nTree, "\n")
+  elseif type == "declaration" then
+  if line.scope == "local" then
+    table.insert(nTree,"local ")
+  end
+    table.insert(nTree, line.var.val)
+    table.insert(nTree, "=")
+    table.insert(nTree, parseAssignment(line.val))
+    table.insert(nTree, "\n")
+  else
+    print(type)
+    --print("unrecognized instruction: " .. inspect(line))
+  end
+  return table.concat(nTree)
+end
+
+function parse(tree)
+  local nTree = {}
+  for _,line in ipairs(tree) do
+    table.insert(nTree,parseLine(line))
+  end
+  print(table.concat(nTree))
+end 
 function runfile(file,output)
   local f = io.open(file, "rb")
   local script = f:read("*all")
@@ -220,12 +306,13 @@ function run(script,output)
   local p = lpeg.Ct((cfg)^0):match(script)
   for _, inst in ipairs(p) do
     local type = inst.type
-    print(inspect(inst))
+    --print(inspect(inst))
     if type == "comment" then
     elseif type == "assignment" then
       --print("assignmnt: " .. "var: " .. inspect(inst.var) .. "val: " .. inspect(inst.val))
     end
   end
+  parse(p)
   if output == true then
       --print(p)
   end
