@@ -298,6 +298,21 @@ function parseLine(line)
     table.insert(nTree, "=")
     table.insert(nTree, parseAssignment(line.val))
     table.insert(nTree, "\n")
+  elseif type == "functioncall" then
+    table.insert(nTree, line.name.val)
+    for _, val in ipairs(line.args) do
+      table.insert(nTree,"(")
+      for _, arg in ipairs(val.val) do
+        table.insert(nTree,parseAssignment(arg))
+        table.insert(nTree,",")
+      end
+      if #val.val >0 then 
+        table.remove(nTree)
+      end
+      table.insert(nTree,")")
+    end
+   -- table.insert(nTree, inspect(line.args))
+    table.insert(nTree, "\n")
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))
