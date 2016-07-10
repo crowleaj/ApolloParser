@@ -7,8 +7,6 @@
 
 require "lpeg"
 
-local inspect = require "inspect"
-
 local retval = function(val) return val end
 local retsp = retval(" ")
 local noret = retval("")
@@ -38,6 +36,9 @@ local lglobal = ("gvar" * ws)/retval("global")
 
 local lcomment = (("--" * (((lpeg.P(1) - "\n")^0)/retval) * "\n" * ws)/
   function(...) return {type = "comment", val = ...} end)
+
+local ldotref = ("." * lvar)/
+    function(ref) return {type = "dotreference", val = ref.val} end
 
 local lfuncvars =  
   ("(" * ws * 
@@ -90,7 +91,7 @@ local opOverload = lpeg.P(
 
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + (lpeg.V"lfunccall" * ws) + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop" + lpeg.V"ltablelookup")^1, 
+  S = ( lcomment + lpeg.V"ltablelookup" + (lpeg.V"lfunccall" * ws) + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -104,7 +105,7 @@ local cfg = lpeg.P{
      --if type(assignment) == "string" then return {type = "declaration", var = var, val = }
     assignment.type = "declaration" assignment.scope = scope return assignment end,
 
-  lfunccall = ( (lpeg.V"ltablelookup" + lvar) * lpeg.V"lfunccallparams" * ((lpeg.V"lfunccallparams")^0) * ws)/
+  lfunccall = ( (lpeg.V"ltablelookup" + lvar) * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
   
   lfunc = 
@@ -117,8 +118,8 @@ local cfg = lpeg.P{
   lfunccallparams = 
     ("(" * ws * 
     ((
-      (((lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws * "," * ws)^0) *
-      (lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws)^-1) *
+      (((lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws * "," * ws)^0) *
+      (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws)^-1) *
     ")")/
     function(...) return {type = "params", val = {...}} end,
   
@@ -170,10 +171,13 @@ lif =
     + lpeg.V"lbody"
     ),
   
-ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]" * ((lpeg.V"ltablebrackets" + (lpeg.V"lfunccallparams" * lpeg.V"ltablebrackets"))^-1)),
-
-ltablelookup = lvar * (lpeg.V"ltablebrackets" + ((("." * lvar)^1) * ((lpeg.V"lfunccallparams" + lpeg.V"ltablebrackets")^-1))),
-
+ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
+    function(val) return {type="brackets", val=val} end,
+--* #(lpeg.P(1) - (" " + lpeg.S")\n\t"))
+ltablebody = (ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
+ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
+    function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
+ 
 lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
 function ( ... ) return {...} end) + lvar)  * ws * (lpeg.P(",")^-1) * ws)^0) * ws * "}" * ws)/
 function (cname,var) 

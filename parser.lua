@@ -6,6 +6,8 @@
 
 require "lexer"
 
+local inspect = require "inspect"
+
 function parseAssignment(rhs)
   local type = rhs.type
   if type == "variable" or type == "numberconst" or type == "stringconst" or type == "operator" then
@@ -36,10 +38,58 @@ function parseAssignment(rhs)
     end
     table.insert(nTree,"}")
     return table.concat(nTree)
+  elseif type == "tablelookup" then
+    local nTree = {}
+    table.insert(nTree, rhs.name.val)
+    for _,val in ipairs(rhs.val) do
+      table.insert(nTree,parseTableLookup(val))
+    end
+    return table.concat(nTree)
+  elseif type == "functioncall" then
+    local nTree = {}
+    table.insert(nTree, parseAssignment(rhs.name))
+    for _, val in ipairs(rhs.args) do
+      table.insert(nTree,"(")
+      for _, arg in ipairs(val.val) do
+        table.insert(nTree,parseAssignment(arg))
+        table.insert(nTree,",")
+      end
+      if #val.val >0 then 
+        table.remove(nTree)
+      end
+      table.insert(nTree,")")
+    end
+    return table.concat(nTree)
   else
     print(type)
-    return ""
+    return "ERR"
   end
+end
+
+function parseTableLookup(ref)
+    local nTree = {}
+    local type = ref.type
+    if type == "brackets" then
+      table.insert(nTree, "[")
+      table.insert(nTree, parseAssignment(ref.val))
+      table.insert(nTree, "]")
+    elseif type == "dotreference" then
+      table.insert(nTree, ".")
+      table.insert(nTree, ref.val)
+    elseif type == "params" then
+      table.insert(nTree,"(")
+      if #ref.val > 0 then
+        for _,v in ipairs(ref.val) do
+          table.insert(nTree, parseAssignment(v))
+          table.insert(nTree, ",")
+        end
+          table.remove(nTree)
+      end
+      table.insert(nTree,")")
+    else
+      return parseAssignment(ref)
+    end
+    return table.concat(nTree)
 end
 
 function parseFunctionBody(body)
@@ -54,14 +104,6 @@ function parseFunctionBody(body)
       table.insert(nTree,parseLine(line))
     end
   end
-  return table.concat(nTree)
-end
-
-function parseTable(table)
-  local nTree = {}
-  table.insert(nTree,"{")
-  table.insert()
-  table.insert(nTree,"}")
   return table.concat(nTree)
 end
 
@@ -85,7 +127,7 @@ function parseLine(line)
   local nTree = {}
   local type = line.type
   if type == "assignment" then
-    table.insert(nTree, line.var.val)
+    table.insert(nTree, parseAssignment(line.var))
     table.insert(nTree, "=")
     table.insert(nTree, parseAssignment(line.val))
     table.insert(nTree, "\n")
@@ -98,20 +140,10 @@ function parseLine(line)
     table.insert(nTree, parseAssignment(line.val))
     table.insert(nTree, "\n")
   elseif type == "functioncall" then
-    table.insert(nTree, line.name.val)
-    for _, val in ipairs(line.args) do
-      table.insert(nTree,"(")
-      for _, arg in ipairs(val.val) do
-        table.insert(nTree,parseAssignment(arg))
-        table.insert(nTree,",")
-      end
-      if #val.val >0 then 
-        table.remove(nTree)
-      end
-      table.insert(nTree,")")
-    end
-   -- table.insert(nTree, inspect(line.args))
+    table.insert(nTree, parseAssignment(line))
     table.insert(nTree, "\n")
+  elseif type == "tablelookup" then
+    return parseAssignment(line)
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))
@@ -138,7 +170,7 @@ function run(script,output)
   local p = lex(script)
   for _, inst in ipairs(p) do
     local type = inst.type
-    --print(inspect(inst))
+    print(inspect(inst))
     if type == "comment" then
     elseif type == "assignment" then
       --print("assignmnt: " .. "var: " .. inspect(inst.var) .. "val: " .. inspect(inst.val))
