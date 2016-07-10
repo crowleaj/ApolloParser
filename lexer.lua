@@ -120,7 +120,7 @@ local cfg = lpeg.P{
       (((lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws * "," * ws)^0) *
       (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lpeg.V"larith" + lval) * ws)^-1) *
     ")")/
-    function(...) return {type = "params", val = {...}} end,
+    function(...) local params = {...} if ... == "()" then params = {} end return {type = "params", val = params} end,
   
   lreturnstatement = ("return" * ws * (lpeg.V"ltablelookup" + lpeg.V"ltable" + lpeg.V"lfunc" + lpeg.V"larith" + lval) * ws)/
     function(val) return {type = "return", val = val} end,
@@ -177,8 +177,15 @@ ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")
 ltablebody = (ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
 ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
     function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
- 
-lclass = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
+lclass = ("class" * ws * lvar * ws * "{" * ws *
+(((lpeg.V"lassignment" + lpeg.V"lclassmethod" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+ ws * "}")/
+  function(name,...) return {type = "class", name = name, val = {...}} end,
+
+lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
+  function(name,vars,...) return {type = "classmethod", name = name, vars = vars, val = {...}} end,
+
+lclassdeprec = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
 function ( ... ) return {...} end) + lvar)  * ws * (lpeg.P(",")^-1) * ws)^0) * ws * "}" * ws)/
 function (cname,var) 
   local assignments = {}

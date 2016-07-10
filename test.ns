@@ -26,3 +26,19 @@ for i from 18 to 25 by 2 {
 for index,num in nums array {
   print("Testing for loop!")
 }
+
+class Entity { 
+	
+		x = 0, y = 0
+		foo
+		
+		Entity(name){
+			print(name)
+		}
+		
+		move(x,y){
+			this:x = x
+			this:y = y
+		}
+		
+}

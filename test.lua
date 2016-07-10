@@ -41,19 +41,4 @@ or q < 10 {
 else {
   print("else statement")
 }
-class Entity { 
-	
-		x = 0, y = 0
-		foo
-		
-		Entity(name){
-			print(name)
-		}
-		
-		move = (x,y){
-			this:x = x
-			this:y = y
-		}
-		
-}
 ]]
