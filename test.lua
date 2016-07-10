@@ -23,12 +23,8 @@ m:move(2,3)
 print(m.x)
 print(v.name)--
 
---for index,num in nums array {
---  print("Testing for loop!")
---}
-for i from 18 to 25 by 2 {
-  print(i)
-}
+
+
 print(5,4,6,7)
 print(print(5,4,p(6)(10)),6,7)
 

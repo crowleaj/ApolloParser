@@ -143,7 +143,35 @@ function parseLine(line)
     table.insert(nTree, parseAssignment(line))
     table.insert(nTree, "\n")
   elseif type == "tablelookup" then
-    return parseAssignment(line)
+    table.insert(nTree,parseAssignment(line))
+    table.insert(nTree, "\n")
+  elseif type == "forloop" then
+    local iter = line.iter
+    type = iter.type 
+    table.insert(nTree, "for ")
+    if type == "fornormal" then
+      table.insert(nTree, iter.var.val)
+      table.insert(nTree, "=")
+      table.insert(nTree, iter.first.val)
+      table.insert(nTree, ",")
+      table.insert(nTree, iter.last.val)
+      table.insert(nTree, ",")
+      table.insert(nTree, iter.step.val)
+    elseif type == "forenhanced" then
+      table.insert(nTree, iter.vars.k)
+      table.insert(nTree, ",")
+      table.insert(nTree, iter.vars.v)
+      table.insert(nTree, " in ")
+      table.insert(nTree, iter.iter)
+      table.insert(nTree, "(")
+      table.insert(nTree, iter.var.val)
+      table.insert(nTree, ")")
+    end
+    table.insert(nTree, " do\n")
+    for _,line in ipairs(line.val) do
+      table.insert(nTree, parseLine(line))
+    end
+    table.insert(nTree, "end\n")
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))

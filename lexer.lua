@@ -57,25 +57,24 @@ local lfornorm = (
   lpeg.P"to" * ws * 
   lnumval * ws *
   ((lpeg.P"by" * ws * lnumval)^-1))/
-    function (first,last,step) return {type = "fornormal", first = first, last = last, step = (step or {type = "numberconst", val = 1})} end
+    function (var,first,last,step) return {type = "fornormal", var = var, first = first, last = last, step = (step or {type = "numberconst", val = 1})} end
 
 local lforen = (
   "for" * ws * 
   (
-    (lvar * ws * "," * ws * lvar)
+    (lvar * ws * "," * ws * lvar)/function(k,v) return {k= k.val, v=v.val} end
     +((lpeg.P"i"+"k")/
-      function(index) return {k = index, v = "_"} end)
+      function(index) return {k = index.val, v = "_"} end)
     +((lvar-(lpeg.P"i"+"k"))/
-      function(var) return {k = "_", v = var} end)
+      function(var) return {k = "_", v = var.val} end)
   ) 
   * ws * "in " * ws * 
-  (
-    (lvar * ws *
-      (
-        lpeg.P"pairs"
-        + (lpeg.P"array"/"ipairs")
-    ))/
-      function(var,iter) return iter .."(" .. var..")" end))
+  lvar * ws *
+    (
+      (lpeg.P"pairs"/"pairs")
+      + (lpeg.P"array"/"ipairs")
+  ))/
+      function(kv,var,iter) return {type = "forenhanced", vars = kv, var = var, iter = iter} end
   
 local arithOp = (lpeg.S("*/+-"))/
   function (operator) return {type = "operator",val = operator} end
@@ -91,7 +90,7 @@ local opOverload = lpeg.P(
 
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + lpeg.V"ltablelookup" + (lpeg.V"lfunccall" * ws) + lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
+  S = ( lcomment + (lpeg.V"lfunccall" * ws) + lpeg.V"ltablelookup"+ lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -105,7 +104,7 @@ local cfg = lpeg.P{
      --if type(assignment) == "string" then return {type = "declaration", var = var, val = }
     assignment.type = "declaration" assignment.scope = scope return assignment end,
 
-  lfunccall = ( (lpeg.V"ltablelookup" + lvar) * ((lpeg.V"lfunccallparams")^1) * ws)/
+  lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
   
   lfunc = 
@@ -147,7 +146,8 @@ local cfg = lpeg.P{
     "]")/ 
       function(...) return {type = "table", val={...}} end,
 
-lforloop = (lforen + lfornorm) * ws * lpeg.V"lforbody" * ws,
+lforloop = ((lforen + lfornorm) * ws * lpeg.V"lforbody" * ws)/
+  function(iter,body) return {type="forloop", iter = iter, val = {body}} end,
 
 lforbody =   
   "{" * ws *  

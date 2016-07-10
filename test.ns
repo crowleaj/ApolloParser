@@ -20,4 +20,9 @@ print(nums[1][1])
 --print((x){return x}(5))
 nums[2][4]()
 --print(print(5+x(),4,p(6)(10)),6,7)
-
+for i from 18 to 25 by 2 {
+  print(i)
+}
+for index,num in nums array {
+  print("Testing for loop!")
+}
