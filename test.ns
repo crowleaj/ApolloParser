@@ -1,6 +1,6 @@
 this:name = name
 var x = 5
-var y = (foo){return 45}
+var y = (foo,bar){return 45}
 var p = (){
 	var x = (me){
 	  var me = (me + 2)

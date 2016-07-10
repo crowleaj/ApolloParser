@@ -107,17 +107,21 @@ function parseFunctionBody(body)
   return table.concat(nTree)
 end
 
-function parseFunction(fcn)
+function parseFunctionVars(vars)
   local nTree = {}
   table.insert(nTree, "function(")
-  for _,v in ipairs(fcn.vars) do
-    table.insert(nTree, v.val)
-    table.insert(nTree, ",")
+    local args = {}
+    for _,v in ipairs(vars) do
+    table.insert(args, v.val)
   end
-  if #fcn.vars > 0 then
-    table.remove(nTree)
-  end
+  table.insert(nTree, table.concat(args,","))
   table.insert(nTree, ")\n")
+  return table.concat(nTree)
+end
+
+function parseFunction(fcn)
+  local nTree = {}
+  table.insert(nTree, parseFunctionVars(fcn.vars))
   table.insert(nTree, parseFunctionBody(fcn.val))
   table.insert(nTree, "end")
   return table.concat(nTree)
@@ -172,6 +176,45 @@ function parseLine(line)
       table.insert(nTree, parseLine(line))
     end
     table.insert(nTree, "end\n")
+  elseif type == "class" then
+    classvars = {}
+    assignments = {}
+    methods = {}
+    constructor = nil
+    for _,v in ipairs(line.val) do
+      type = v.type
+      print(type)
+      if type == "variable" then
+        table.insert(classvars, v.val)
+      elseif type == "assignment" then
+        table.insert(classvars, v.var.val)
+        table.insert(assignments, v)
+      elseif type == "classmethod" then
+        if v.name.val == line.name.val then
+          constructor = v
+        else
+          table.insert(methods,v)
+        end
+      else
+      end
+    end
+    table.insert(nTree, line.name.val)
+    table.insert(nTree, "={\n__initfunction = ")
+    if constructor ~= nil then
+      table.insert(nTree, parseFunctionVars(constructor.vars))
+    else
+      table.insert(nTree, "function()\n")
+    end
+    if constructor ~= nil then
+    else
+    end
+    table.insert(nTree,"end\n")
+    table.insert(nTree, "}\n")
+    table.insert(nTree, line.name.val)
+    table.insert(nTree, ".__index=")
+    table.insert(nTree, line.name.val)
+    table.insert(nTree, "\n")
+    print(inspect(classvars))
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))
@@ -198,7 +241,7 @@ function run(script,output)
   local p = lex(script)
   for _, inst in ipairs(p) do
     local type = inst.type
-    print(inspect(inst))
+    --print(inspect(inst))
     if type == "comment" then
     elseif type == "assignment" then
       --print("assignmnt: " .. "var: " .. inspect(inst.var) .. "val: " .. inspect(inst.val))
