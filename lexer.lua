@@ -7,20 +7,13 @@
 
 require "lpeg"
 
-local retval = function(val) return val end
-local retsp = retval(" ")
-local noret = retval("")
-local newln = retval("\n")
-
 local ws = ((lpeg.P(" ") + "\n"+"\t")^0)
-local wsCs = (ws/noret)
-local wsOne =  (ws/retsp)
-local wsNl = (ws/"\n")
+
 local lnum = (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
-  function (num) return {type = "numberconst",val = num} end
-local lstring = ((("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))/
+  function (num) return {type = "numberconst", val = num} end
+local lstring = (("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))/
   function  (string) return {type = "stringconst", val = string}  end
-)
+
 
 local lconst = (lnum + lstring)
 local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
@@ -31,11 +24,11 @@ local lvar = lvarclass + lvarnorm
 local lval = lconst + lvar
 local lnumval = lnum + lvar
 
-local llocal = ("var" * ws)/retval("local")
-local lglobal = ("gvar" * ws)/retval("global")
+local llocal = ("var" * ws)/"local"
+local lglobal = ("gvar" * ws)/"global"
 
-local lcomment = (("--" * (((lpeg.P(1) - "\n")^0)/retval) * "\n" * ws)/
-  function(...) return {type = "comment", val = ...} end)
+local lcomment = ("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws)/
+  function(...) return {type = "comment", val = ...} end
 
 local ldotref = ("." * lvar)/
     function(ref) return {type = "dotreference", val = ref.val} end
@@ -57,7 +50,7 @@ local lfornorm = (
   lpeg.P"to" * ws * 
   lnumval * ws *
   ((lpeg.P"by" * ws * lnumval)^-1))/
-    function (var,first,last,step) return {type = "fornormal", var = var, first = first, last = last, step = (step or {type = "numberconst", val = 1})} end
+    function (var,first,last,step) return {type = "fornormal", var = var.val, first = first, last = last, step = (step or {type = "numberconst", val = 1})} end
 
 local lforen = (
   "for" * ws * 
@@ -74,10 +67,11 @@ local lforen = (
       (lpeg.P"pairs"/"pairs")
       + (lpeg.P"array"/"ipairs")
   ))/
-      function(kv,var,iter) return {type = "forenhanced", vars = kv, var = var, iter = iter} end
+      function(kv,var,iter) return {type = "forenhanced", vars = kv, var = var.val, iter = iter} end
   
 local arithOp = (lpeg.S("*/+-"))/
   function (operator) return {type = "operator",val = operator} end
+  
 local lcompare = lpeg.C(lpeg.S("<>") + "<=" + ">=" + "==")/
   function (operator) return {type = "comparison",val = operator} end
 
@@ -173,8 +167,9 @@ lif =
   
 ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
     function(val) return {type="brackets", val=val} end,
---* #(lpeg.P(1) - (" " + lpeg.S")\n\t"))
+
 ltablebody = (ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
+
 ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
     function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
 lclass = ("class" * ws * lvar * ws * "{" * ws *
@@ -184,43 +179,6 @@ lclass = ("class" * ws * lvar * ws * "{" * ws *
 
 lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
   function(name,vars,...) return {type = "classmethod", name = name, vars = vars, val = {...}} end,
-
-lclassdeprec = lpeg.Cs(("class" * ws * lvar * ws * "{" * ws * lpeg.Ct(( (( lpeg.Ct(lvar * lpeg.V"lfunc")) + lpeg.Ct(lpeg.Cs(lpeg.V"lassignment")/
-function ( ... ) return {...} end) + lvar)  * ws * (lpeg.P(",")^-1) * ws)^0) * ws * "}" * ws)/
-function (cname,var) 
-  local assignments = {}
-  local constructor = nil
-  local functions = {}
-  for _,v in pairs(var) do 
-    if type(v) == "table" then
-      if #v == 1 then 
-        table.insert(assignments,table.concat(v[1]))
-      elseif v[1] == cname then
-        constructor = v
-      else
-        table.insert(functions,table.concat(v))
-      end
-    end
-  end 
-  if constructor ~= nil then
-    constructor[1] =  "function " .. cname .. ":__init"
-    local fcn = {}
-    for k,v in ipairs(constructor) do
-      table.insert(fcn,v)
-      if k == 2 then
-        table.insert(fcn,"\nlocal this ={")
-        for _,decl in ipairs(assignments) do
-          table.insert(fcn,decl .. ",")
-        end
-        table.insert(fcn,"} setmetatable(this, self)")
-      end
-    end
-    fcn[#fcn] = "return this\nend\n"
-    return cname .."={}\n" .. table.concat(fcn) .. cname .. ".__index=" .. cname .. "\n" 
-  else
-    return cname .. "={ }\n" .. cname .. ".__index=" .. cname .. "\n" 
-  end
-end),
 }
 
 function lex(script)

@@ -8,6 +8,21 @@ require "lexer"
 
 local inspect = require "inspect"
 
+--http://lua-users.org/wiki/CopyTable
+function shallowcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
 function parseAssignment(rhs)
   local type = rhs.type
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "stringconst" or type == "operator" then
@@ -158,7 +173,27 @@ function annotateInstanceVariables(vars,funcvars,code,ann)
         inst.val.val = ann .. inst.val.val
       end
     elseif type == "forloop" then
-
+      type = inst.iter.type
+      local copy = shallowcopy(funcvars)
+      if type == "fornormal" then
+        if inst.iter.first.type == "classvariable" or contains(vars, funcvars, inst.iter.first.val) then
+          inst.iter.first.val = ann .. inst.iter.var
+        end
+        if inst.iter.last.type == "classvariable" or contains(vars, funcvars, inst.iter.last.val) then
+          inst.iter.last.val = ann .. inst.iter.last.val
+        end
+        if inst.iter.step.type == "classvariable" or contains(vars, funcvars, inst.iter.step.val) then
+          inst.iter.step.val = ann .. inst.iter.step.val
+        end
+        table.insert(copy,inst.iter.var)
+      elseif type == "forenhanced" then
+        if inst.iter.var.type == "classvariable" or contains(vars, funcvars, inst.iter.var.val) then
+          inst.iter.var.val = ann .. inst.iter.var.val
+        end
+        table.insert(copy,inst.iter.vals.k)
+        table.insert(copy,inst.iter.vals.v)
+      end
+      annotateInstanceVariables(vars, copy, inst.val, ann)
     end
   end
 end
@@ -190,7 +225,7 @@ function parseLine(line)
     type = iter.type 
     table.insert(nTree, "for ")
     if type == "fornormal" then
-      table.insert(nTree, iter.var.val)
+      table.insert(nTree, iter.var)
       table.insert(nTree, "=")
       table.insert(nTree, iter.first.val)
       table.insert(nTree, ",")
@@ -219,7 +254,6 @@ function parseLine(line)
     constructor = nil
     for _,v in ipairs(line.val) do
       type = v.type
-      print(type)
       if type == "variable" then
         table.insert(classvars, v.val)
       elseif type == "assignment" then
@@ -255,12 +289,21 @@ function parseLine(line)
       table.insert(nTree, parseLine(v))
     end
     table.insert(nTree, "setmetatable(this, self)\nreturn this\nend\n")
+    for _,fcn in ipairs(methods) do
+      table.insert(nTree, ",")
+      table.insert(nTree, fcn.name.val)
+      table.insert(nTree, "=")
+      table.insert(fcn.vars, 1, "self")
+      annotateInstanceVariables(classvars, fcn.vars, fcn.val, "self.")
+      table.insert(nTree, parseFunction(fcn))
+    end
     table.insert(nTree, "}\n")
     table.insert(nTree, line.name.val)
     table.insert(nTree, ".__index=")
     table.insert(nTree, line.name.val)
     table.insert(nTree, "\n")
-    print(inspect(classvars))
+  elseif type == "comment" then
+    --print(line.val)
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))
