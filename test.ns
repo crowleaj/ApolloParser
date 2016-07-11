@@ -44,4 +44,4 @@ class Entity {
 }
 
 Entity e(5)
-print(e:foo)
+e:foo

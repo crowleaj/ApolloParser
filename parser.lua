@@ -306,6 +306,29 @@ function parseLine(line)
     table.insert(nTree, "\n")
   elseif type == "comment" then
     --print(line.val)
+  elseif type == "classinit" then
+    if line.scope == "local" then
+      table.insert(nTree, "local ")
+    end
+    table.insert(nTree, line.var)
+    table.insert(nTree, "=")
+    table.insert(nTree, line.class)
+    table.insert(nTree, ":__initfunction")
+    table.insert(nTree,"(")
+    for _, arg in ipairs(line.args.val) do
+        table.insert(nTree,parseAssignment(arg))
+        table.insert(nTree,",")
+    end
+    if #line.args.val >0 then 
+      table.remove(nTree)
+    end
+    table.insert(nTree,")")
+    table.insert(nTree, "\n")
+  elseif type == "classreference" then
+    table.insert(nTree, line.var)
+    table.insert(nTree, ".")
+    table.insert(nTree, line.val)
+    table.insert(nTree, "\n")
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))

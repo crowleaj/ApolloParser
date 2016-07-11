@@ -84,7 +84,7 @@ local opOverload = lpeg.P(
 
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + (lpeg.V"lfunccall" * ws) + lpeg.V"ltablelookup"+ lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
+  S = ( lcomment + lpeg.V"lclassreference" + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"ltablelookup"+ lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -169,11 +169,20 @@ ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
 
 lclass = ("class" * ws * lvar * ws * "{" * ws *
 (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
- ws * "}")/
+ ws * "}" * ws)/
   function(name,...) return {type = "class", name = name.val, val = {...}} end,
 
 lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
   function(name,vars,...) return {type = "classmethod", name = name.val, vars = vars, val = {...}} end,
+
+lglobalclassinit = ("G_" * lpeg.V"lclassinit")/
+  function(var) var.scope = "global" return var end,
+
+lclassinit = (lvar * ws * lvar * lpeg.V"lfunccallparams" * ws)/
+  function(class,var,params) return {type = "classinit", scope = "local", class = class.val, var = var.val, args = params} end ,
+
+lclassreference = ((lvar-"this") * ":" * lvar)/
+  function(var, val) return {type = "classreference", var = var.val, val = val.val} end,
 }
 
 function lex(script)
