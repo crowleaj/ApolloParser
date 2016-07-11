@@ -10,7 +10,7 @@ Simplified expressions for the AST data descriptions are:
 
 var = \<classvariable + variable>
 
-numval = \<arithmetic + numberconst + functioncall + tablelookup + var>
+numval = \<parentheses + arithmetic + numberconst + functioncall + tablelookup + var>
 
 val = \<stringconst + numval>
 
@@ -39,10 +39,27 @@ assignment {var = \<var> val = \<table + val>}
 
 declaration {var = \<var>, scope = \<local + global>, val = \<val>}
 
-functioncall {name = \<string value>, args = {\<val>*}} (whenever at least one reference is involved, tag automatically is tablelookup because lpeg matches are "greedy")
+functioncall {name = \<string value>, args = {\<params>*}} (whenever at least one reference is involved, tag automatically is tablelookup because lpeg matches are "greedy")
 
 function {vars = {\<string value>*}, val = {\<instruction*>}}
 
+params {val = {<val>*}}
+
+arithmetic = {val = {\<val + operator>*}}
+
+parentheses = {val = \<parentheses + arithmetic + numval>}
+
+table {val = {\<val>*}}
+
+forloop {iter = \<fornormal + forenhanced>, val = {\<instruction>*}}
+
+brackets {val = \<val>}
+
+tablelookup {name = \<var>, val = \<dotreference + brackets + params>}
+
+class {name = \<string value>, val = {\<assignment + classmethod + variable>*}}
+
+classmethod {name = \<var>, vars = {\<string value>*}, val = {\<instruction>*}}
 
 Note: The type of node can be queried with the type attribute.
       Whenever a variable is guarenteed to be a string value, it is favored to use the string value instead of a variable tag in the lexer

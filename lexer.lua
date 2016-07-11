@@ -36,7 +36,7 @@ local ldotref = ("." * lvar)/
 local lfuncvars =  
   ("(" * ws * 
   (
-    ((((lvar/function(var) return var.val end) * ws * ","* ws)^0) * lvar/function(var) return var.val end) 
+    ((((lvar/function(var) return var.val end) * ws * ","* ws)^0) * (lvar/function(var) return var.val end)) 
     + ws
   ) * ws * 
   ")")/
@@ -139,13 +139,8 @@ local cfg = lpeg.P{
     "]")/ 
       function(...) return {type = "table", val={...}} end,
 
-lforloop = ((lforen + lfornorm) * ws * lpeg.V"lforbody" * ws)/
+lforloop = ((lforen + lfornorm) * ws * lpeg.V"lbody" * ws)/
   function(iter,body) return {type="forloop", iter = iter, val = {body}} end,
-
-lforbody =   
-  "{" * ws *  
-  ((lpeg.V"S" * ws)^0) * ws * 
-  lpeg.P"}" * ws,
   
 lbody = (
   "{" * ws *  
@@ -171,13 +166,14 @@ ltablebody = (ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpe
 
 ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
     function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
+
 lclass = ("class" * ws * lvar * ws * "{" * ws *
 (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
  ws * "}")/
-  function(name,...) return {type = "class", name = name, val = {...}} end,
+  function(name,...) return {type = "class", name = name.val, val = {...}} end,
 
 lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
-  function(name,vars,...) return {type = "classmethod", name = name, vars = vars, val = {...}} end,
+  function(name,vars,...) return {type = "classmethod", name = name.val, vars = vars, val = {...}} end,
 }
 
 function lex(script)

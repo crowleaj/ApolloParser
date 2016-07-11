@@ -146,7 +146,7 @@ function contains(pair, nopair, key)
   for _,v in ipairs(pair) do
     if v == key then
       for _,v in ipairs(nopair) do
-        if v.val == key then
+        if v == key then
           return false
         end
       end
@@ -260,7 +260,7 @@ function parseLine(line)
         table.insert(classvars, v.var.val)
         table.insert(assignments, v)
       elseif type == "classmethod" then
-        if v.name.val == line.name.val then
+        if v.name == line.name then
           constructor = v
         else
           table.insert(methods,v)
@@ -268,10 +268,10 @@ function parseLine(line)
       else
       end
     end
-    table.insert(nTree, line.name.val)
+    table.insert(nTree, line.name)
     table.insert(nTree, "={\n__initfunction = ")
     if constructor ~= nil then
-      table.insert(constructor.vars, 2, "self")
+      table.insert(constructor.vars, 1, "self")
       table.insert(nTree, parseFunctionVars(constructor.vars))
     else
       table.insert(nTree, "function()\n")
@@ -282,25 +282,27 @@ function parseLine(line)
         table.insert(nTree, parseLine(v))
         table.insert(nTree, ",")
       end
+        annotateInstanceVariables(classvars, constructor.vars, constructor.val, "this.")
+    else
+        annotateInstanceVariables(classvars, constructor.vars, constructor.val, "this.")
     end
     table.insert(nTree, "}\n")
-    annotateInstanceVariables(classvars, constructor.vars, constructor.val, "this.")
-    for _,v in ipairs(constructor.val) do
+     for _,v in ipairs(constructor.val) do
       table.insert(nTree, parseLine(v))
     end
     table.insert(nTree, "setmetatable(this, self)\nreturn this\nend\n")
     for _,fcn in ipairs(methods) do
       table.insert(nTree, ",")
-      table.insert(nTree, fcn.name.val)
+      table.insert(nTree, fcn.name)
       table.insert(nTree, "=")
       table.insert(fcn.vars, 1, "self")
       annotateInstanceVariables(classvars, fcn.vars, fcn.val, "self.")
       table.insert(nTree, parseFunction(fcn))
     end
     table.insert(nTree, "}\n")
-    table.insert(nTree, line.name.val)
+    table.insert(nTree, line.name)
     table.insert(nTree, ".__index=")
-    table.insert(nTree, line.name.val)
+    table.insert(nTree, line.name)
     table.insert(nTree, "\n")
   elseif type == "comment" then
     --print(line.val)
