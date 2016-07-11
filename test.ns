@@ -32,8 +32,8 @@ class Entity {
 		x = 0, y = 0
 		foo
 		
-		Entity(name){
-			print(name)
+		Entity(foo){
+			this:foo = foo
 		}
 		
 		move(x,y){

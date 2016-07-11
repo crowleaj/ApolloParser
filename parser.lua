@@ -10,7 +10,7 @@ local inspect = require "inspect"
 
 function parseAssignment(rhs)
   local type = rhs.type
-  if type == "variable" or type == "numberconst" or type == "stringconst" or type == "operator" then
+  if type == "variable" or type == "classvariable" or type == "numberconst" or type == "stringconst" or type == "operator" then
     return rhs.val
   elseif type == "function" then
     return parseFunction(rhs)
@@ -127,6 +127,42 @@ function parseFunction(fcn)
   return table.concat(nTree)
 end
 
+function contains(pair, nopair, key)
+  for _,v in ipairs(pair) do
+    if v == key then
+      for _,v in ipairs(nopair) do
+        if v.val == key then
+          return false
+        end
+      end
+      return true
+    end
+  end
+  return false
+end
+
+function annotateInstanceVariables(vars,funcvars,code,ann)
+  for _,inst in pairs(code) do
+    local type = inst.type
+    if type == "assignment" then
+      if inst.var.type == "classvariable" or contains(vars, funcvars, inst.var.val) then
+        inst.var.val = ann .. inst.var.val
+      end
+      if inst.val.type == "function" then
+        annotateInstanceVariables(vars, funcvars, inst.val.val, ann)
+      elseif inst.val.type == "variable" then
+        if contains(vars, funcvars, inst.val.val) then
+          inst.val.val = ann .. inst.val.val
+        end
+      elseif inst.val.type == "classvariable" then
+        inst.val.val = ann .. inst.val.val
+      end
+    elseif type == "forloop" then
+
+    end
+  end
+end
+
 function parseLine(line)
   local nTree = {}
   local type = line.type
@@ -201,14 +237,24 @@ function parseLine(line)
     table.insert(nTree, line.name.val)
     table.insert(nTree, "={\n__initfunction = ")
     if constructor ~= nil then
+      table.insert(constructor.vars, 2, "self")
       table.insert(nTree, parseFunctionVars(constructor.vars))
     else
       table.insert(nTree, "function()\n")
     end
+    table.insert(nTree, "this = {")
     if constructor ~= nil then
-    else
+      for _,v in ipairs(assignments) do
+        table.insert(nTree, parseLine(v))
+        table.insert(nTree, ",")
+      end
     end
-    table.insert(nTree,"end\n")
+    table.insert(nTree, "}\n")
+    annotateInstanceVariables(classvars, constructor.vars, constructor.val, "this.")
+    for _,v in ipairs(constructor.val) do
+      table.insert(nTree, parseLine(v))
+    end
+    table.insert(nTree, "setmetatable(this, self)\nreturn this\nend\n")
     table.insert(nTree, "}\n")
     table.insert(nTree, line.name.val)
     table.insert(nTree, ".__index=")
