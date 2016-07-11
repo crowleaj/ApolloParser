@@ -9,23 +9,23 @@ Nodes of the AST are one of the following:
 
 numberconst {val = \<number value>}
 
-stringconst {val = <string value>}
+stringconst {val = \<string value>}
 
-variable {val = <string value>}
+variable {val = \<string value>}
 
-classvariable {val = <string value>} (tag used to specify class variable in instance annotator for same variable name in scope by using this: prefix)
+classvariable {val = \<string value>} (tag used to specify class variable in instance annotator for same variable name in scope by using this: prefix)
 
-comment {val = <rhs of -- until newline>}
+comment {val = \<rhs of -- until newline>}
 
-dotreference {val = <string value>} (for accessing table indices with foo.bar syntax)
+dotreference {val = \<string value>} (for accessing table indices with foo.bar syntax)
 
-fornormal {var = <string value>, first = <numberconst + functioncall + classvariable + variable>, last = <numberconst + functioncall + classvariable + variable>, step = <numberconst + functioncall + classvariable + variable>}
+fornormal {var = \<string value>, first = \<numberconst + functioncall + classvariable + variable>, last = \<numberconst + functioncall + classvariable + variable>, step = \<numberconst + functioncall + classvariable + variable>}
 
-forenhanced {vars = {k = <string value>, v = <string value>}, var = <functioncall + tablelookup + variable + classvariable>}
+forenhanced {vars = {k = \<string value>, v = \<string value>}, var = \<functioncall + tablelookup + variable + classvariable>}
 
-operator {val = <one of +-*/>}
+operator {val = \<one of +-*/>}
 
-assignment {var = <variable + classvariable> val = <tablelookup + table + function + arithmetic + numberconst + stringconst + variable + classvariable>}
+assignment {var = \<variable + classvariable> val = \<tablelookup + table + function + arithmetic + numberconst + stringconst + variable + classvariable>}
 
 
 
