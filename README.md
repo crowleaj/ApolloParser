@@ -7,7 +7,7 @@ The lexer uses the provided grammar and capture rules in lexer.lua to create an 
 
 Nodes of the AST are one of the following:
 
-numberconst {val = <number value>}
+numberconst {val = \<number value>}
 
 stringconst {val = <string value>}
 
