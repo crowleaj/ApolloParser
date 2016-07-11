@@ -36,7 +36,7 @@ local ldotref = ("." * lvar)/
 local lfuncvars =  
   ("(" * ws * 
   (
-    (((lvar * ws * ","* ws)^0) * lvar) 
+    ((((lvar/function(var) return var.val end) * ws * ","* ws)^0) * lvar/function(var) return var.val end) 
     + ws
   ) * ws * 
   ")")/
@@ -71,7 +71,7 @@ local lforen = (
   
 local arithOp = (lpeg.S("*/+-"))/
   function (operator) return {type = "operator",val = operator} end
-  
+
 local lcompare = lpeg.C(lpeg.S("<>") + "<=" + ">=" + "==")/
   function (operator) return {type = "comparison",val = operator} end
 
@@ -94,8 +94,7 @@ local cfg = lpeg.P{
       ) *ws,
 
   ldecl = ((llocal + lglobal) * ws * (lpeg.V"lassignment" + (lvarnorm * ws)))/
-    function(scope,assignment) 
-     --if type(assignment) == "string" then return {type = "declaration", var = var, val = }
+    function(scope,assignment)
     assignment.type = "declaration" assignment.scope = scope return assignment end,
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/

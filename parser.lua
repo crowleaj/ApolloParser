@@ -127,7 +127,7 @@ function parseFunctionVars(vars)
   table.insert(nTree, "function(")
     local args = {}
     for _,v in ipairs(vars) do
-    table.insert(args, v.val)
+    table.insert(args, v)
   end
   table.insert(nTree, table.concat(args,","))
   table.insert(nTree, ")\n")
