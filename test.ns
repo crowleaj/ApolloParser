@@ -1,28 +1,23 @@
-this:name = name
-var x = 5
+--Code to test Nitro Scripting language
+
 var y = (foo,bar){return 45}
 var p = (){
 	var x = (me){
-	  var me = (me + 2)
-	  return y
+	  me = (me + 2)
+	  return me
 	}
   return x
 }
-var tryit = [(x){return [(){ return 4}]}]
-print(hi)
-var nums = [[5],(){var x=2 print("WORKING!!!")},7,8,9,10]
---
---name
-var y = (me * ( .10 + 20.3 * 5. ))
-print(nums[1][1])
---Entity m("Alice")
 
---print((x){return x}(5))
-nums[2][4]()
---print(print(5+x(),4,p(6)(10)),6,7)
+var nums = [[5],(){var x=2 print("WORKING!!!")},7,8,9,10]
+
+var y = (2 * ( .10 + 20.3 * 5. ))
+print(nums[1][1])
+
 for i from 18 to 25 by 2 {
   print(i)
 }
+var nums = [5]
 for index,num in nums array {
   print("Testing for loop!")
 }
@@ -30,18 +25,29 @@ for index,num in nums array {
 class Entity { 
 	
 		x = 0, y = 0
-		foo
+		name
 		
-		Entity(foo){
-			this:foo = foo
+		Entity(name){
+			this->name = name
+			move(2,2)
 		}
 		
 		move(x,y){
-			this:x = x
-			this:y = y
-		}
+			this->x = x
+			this->y = y
+			alert()
+		}	
 		
+		alert(){
+			io.write("moved to: ")
+			io.write(tostring(x))
+			io.write(",")
+			print(tostring(y))
+		}
 }
 
-Entity e(5)
-e:foo
+Entity e("Alice")
+print(e->x,e->y)
+e:move(5,6)
+print(e->name)
+print(e->x,e->y)

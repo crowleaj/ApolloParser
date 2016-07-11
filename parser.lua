@@ -75,6 +75,18 @@ function parseAssignment(rhs)
       table.insert(nTree,")")
     end
     return table.concat(nTree)
+  elseif type == "classreference" then
+    local nTree = {}
+    --table.insert(nTree, rhs.var)
+    table.insert(nTree, ".")
+    table.insert(nTree, rhs.val)
+    return table.concat(nTree)
+  elseif type == "classmethodcall" then
+    local nTree = {}
+    table.insert(nTree, ":")
+    table.insert(nTree, rhs.val)
+    table.insert(nTree, parseFunctionArgs(rhs.args))
+    return table.concat(nTree)
   else
     print(type)
     return "ERR"
@@ -142,8 +154,22 @@ function parseFunction(fcn)
   return table.concat(nTree)
 end
 
+function parseFunctionArgs(args)
+  local nTree = {}
+  table.insert(nTree,"(")
+  for _, arg in ipairs(args.val) do
+    table.insert(nTree,parseAssignment(arg))
+    table.insert(nTree,",")
+  end
+  if #args.val >0 then 
+      table.remove(nTree)
+  end
+  table.insert(nTree,")")
+  return table.concat(nTree)
+end
+
 function contains(pair, nopair, key)
-  for _,v in ipairs(pair) do
+  for _,v in ipairs(pair.vars) do
     if v == key then
       for _,v in ipairs(nopair) do
         if v == key then
@@ -153,47 +179,78 @@ function contains(pair, nopair, key)
       return true
     end
   end
+  for _,v in ipairs(pair.methods) do
+  if v.name == key then
+    for _,v in ipairs(nopair) do
+      if v == key then
+        return false
+      end
+    end
+    return true
+  end
+end
   return false
 end
 
 function annotateInstanceVariables(vars,funcvars,code,ann)
   for _,inst in pairs(code) do
     local type = inst.type
-    if type == "assignment" then
+    if type == "variable" then
+      if contains(vars, funcvars, inst.val) then
+        inst.val = ann .. "." .. inst.val
+      end
+    elseif type == "classvariable" then
+      inst.val = ann .. "." .. inst.val
+    elseif type == "assignment" then
       if inst.var.type == "classvariable" or contains(vars, funcvars, inst.var.val) then
-        inst.var.val = ann .. inst.var.val
+        inst.var.val = ann .. "." .. inst.var.val
       end
       if inst.val.type == "function" then
         annotateInstanceVariables(vars, funcvars, inst.val.val, ann)
       elseif inst.val.type == "variable" then
         if contains(vars, funcvars, inst.val.val) then
-          inst.val.val = ann .. inst.val.val
+          inst.val.val = ann .. "." .. inst.val.val
         end
       elseif inst.val.type == "classvariable" then
-        inst.val.val = ann .. inst.val.val
+        inst.val.val = ann .. "." .. inst.val.val
       end
     elseif type == "forloop" then
       type = inst.iter.type
       local copy = shallowcopy(funcvars)
       if type == "fornormal" then
         if inst.iter.first.type == "classvariable" or contains(vars, funcvars, inst.iter.first.val) then
-          inst.iter.first.val = ann .. inst.iter.var
+          inst.iter.first.val = ann .. "." .. inst.iter.var
         end
         if inst.iter.last.type == "classvariable" or contains(vars, funcvars, inst.iter.last.val) then
-          inst.iter.last.val = ann .. inst.iter.last.val
+          inst.iter.last.val = ann .. "." .. inst.iter.last.val
         end
         if inst.iter.step.type == "classvariable" or contains(vars, funcvars, inst.iter.step.val) then
-          inst.iter.step.val = ann .. inst.iter.step.val
+          inst.iter.step.val = ann .. "." .. inst.iter.step.val
         end
         table.insert(copy,inst.iter.var)
       elseif type == "forenhanced" then
         if inst.iter.var.type == "classvariable" or contains(vars, funcvars, inst.iter.var.val) then
-          inst.iter.var.val = ann .. inst.iter.var.val
+          inst.iter.var.val = ann .. "." .. inst.iter.var.val
         end
         table.insert(copy,inst.iter.vals.k)
         table.insert(copy,inst.iter.vals.v)
       end
       annotateInstanceVariables(vars, copy, inst.val, ann)
+    elseif type == "functioncall" then
+      annotateInstanceVariables(vars, funcvars, inst.args, ann)
+      if contains(vars, funcvars, inst.name.val) then
+        inst.name.val = ann .. ":" .. inst.name.val
+      end
+    elseif type == "params" then
+      annotateInstanceVariables(vars, funcvars, inst.val, ann)
+    elseif type == "tablelookup" then
+      if inst.name.type == "classvariable" or contains(vars, funcvars, inst.name.val) then
+          inst.iter.first.val = ann .. "." .. inst.iter.var
+      end
+      annotateInstanceVariables(vars, funcvars, inst.val, ann)
+      --print(inspect(inst))
+    else
+      print(type)
     end
   end
 end
@@ -239,7 +296,7 @@ function parseLine(line)
       table.insert(nTree, " in ")
       table.insert(nTree, iter.iter)
       table.insert(nTree, "(")
-      table.insert(nTree, iter.var.val)
+      table.insert(nTree, iter.var)
       table.insert(nTree, ")")
     end
     table.insert(nTree, " do\n")
@@ -282,21 +339,21 @@ function parseLine(line)
         table.insert(nTree, parseLine(v))
         table.insert(nTree, ",")
       end
-        annotateInstanceVariables(classvars, constructor.vars, constructor.val, "this.")
+        annotateInstanceVariables({vars = classvars, methods = methods}, constructor.vars, constructor.val, "this")
     else
-        annotateInstanceVariables(classvars, constructor.vars, constructor.val, "this.")
+        annotateInstanceVariables({vars = classvars, methods = methods}, constructor.vars, constructor.val, "this")
     end
-    table.insert(nTree, "}\n")
+    table.insert(nTree, "}\nsetmetatable(this, self)\n")
      for _,v in ipairs(constructor.val) do
       table.insert(nTree, parseLine(v))
     end
-    table.insert(nTree, "setmetatable(this, self)\nreturn this\nend\n")
+    table.insert(nTree, "return this\nend\n")
     for _,fcn in ipairs(methods) do
       table.insert(nTree, ",")
       table.insert(nTree, fcn.name)
       table.insert(nTree, "=")
       table.insert(fcn.vars, 1, "self")
-      annotateInstanceVariables(classvars, fcn.vars, fcn.val, "self.")
+      annotateInstanceVariables({vars = classvars, methods = methods}, fcn.vars, fcn.val, "self")
       table.insert(nTree, parseFunction(fcn))
     end
     table.insert(nTree, "}\n")
@@ -324,11 +381,6 @@ function parseLine(line)
     end
     table.insert(nTree,")")
     table.insert(nTree, "\n")
-  elseif type == "classreference" then
-    table.insert(nTree, line.var)
-    table.insert(nTree, ".")
-    table.insert(nTree, line.val)
-    table.insert(nTree, "\n")
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))
@@ -341,7 +393,7 @@ function parse(tree)
   for _,line in ipairs(tree) do
     table.insert(nTree,parseLine(line))
   end
-  print(table.concat(nTree))
+  return table.concat(nTree)
 end 
 
 function runfile(file,output)
@@ -361,15 +413,15 @@ function run(script,output)
       --print("assignmnt: " .. "var: " .. inspect(inst.var) .. "val: " .. inspect(inst.val))
     end
   end
-  parse(p)
+  p = parse(p)
   if output == true then
       --print(p)
   end
-  --[[local chunk, err = assert(loadstring(p))
+  local chunk, err = assert(loadstring(p))
   if chunk == nil then
     print(err)
   else
     chunk()
     io.write "\n"
-  end--]]
+  end
 end
