@@ -4,28 +4,43 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function contains(pair, nopair, key)
-  for _,v in ipairs(pair.vars) do
-    if v == key then
-      for _,v in ipairs(nopair) do
-        if v == key then
-          return false
+--http://lua-users.org/wiki/CopyTable
+function shallowcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
         end
-      end
-      return true
+    else -- number, string, boolean, etc
+        copy = orig
     end
-  end
-  for _,v in ipairs(pair.methods) do
-  if v.name == key then
-    for _,v in ipairs(nopair) do
-      if v == key then
-        return false
-      end
-    end
-    return true
-  end
+    return copy
 end
-  return false
+
+function contains(pair, nopair, key)
+    for _,v in ipairs(pair.vars) do
+        if v == key then
+            for _,v in ipairs(nopair) do
+                if v == key then
+                    return false
+                end
+            end
+        return true
+        end
+    end
+    for _,v in ipairs(pair.methods) do
+        if v.name == key then
+            for _,v in ipairs(nopair) do
+                if v == key then
+                    return false
+                end
+            end
+        return true
+        end
+    end
+    return false
 end
 
 function annotateInstanceVariables(vars,funcvars,code,ann)

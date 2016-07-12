@@ -10,21 +10,6 @@ require "classann"
 
 local inspect = require "inspect"
 
---http://lua-users.org/wiki/CopyTable
-function shallowcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in pairs(orig) do
-            copy[orig_key] = orig_value
-        end
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
 function parseAssignment(rhs)
   local type = rhs.type
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "stringconst" or type == "operator" then
@@ -321,17 +306,9 @@ end
 
 function run(script,output)
   local p = lex(script)
-  for _, inst in ipairs(p) do
-    local type = inst.type
-    --print(inspect(inst))
-    if type == "comment" then
-    elseif type == "assignment" then
-      --print("assignmnt: " .. "var: " .. inspect(inst.var) .. "val: " .. inspect(inst.val))
-    end
-  end
   p = parse(p)
   if output == true then
-      --print(p)
+      print(p)
   end
   local chunk, err = assert(loadstring(p))
   if chunk == nil then

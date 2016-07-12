@@ -1,6 +1,6 @@
 require "parser"
 
-runfile("test.ns",true)
+runfile("test.ns",false)
 
 --local m = Entity:__initfunction("Alice")
 --print(m.x)
