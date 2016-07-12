@@ -53,3 +53,25 @@ print(e->x,e->y)
 e:move(5,6)
 print(e->name)
 print(e->x,e->y)
+
+--Will only work if Object is bound in C/C++
+cclass vec3{
+    
+    x, y, z
+
+    vec3(x, y, z)
+ 
+		cross(vec3)
+    
+		smult(scalar)
+    
+		rotate(angle, axis)
+    
+		normalize()
+
+}
+
+
+vec3 vec(1,2,3)
+print(vec:>z)
+

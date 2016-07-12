@@ -68,6 +68,13 @@ function parseAssignment(rhs)
     table.insert(nTree, ".")
     table.insert(nTree, rhs.val)
     return table.concat(nTree)
+  elseif type == "cclassreference" then
+    local nTree = {}
+    --table.insert(nTree, rhs.var)
+    table.insert(nTree, ":")
+    table.insert(nTree, rhs.val)
+    table.insert(nTree, "()")
+    return table.concat(nTree)
   elseif type == "classmethodcall" then
     local nTree = {}
     table.insert(nTree, ":")
@@ -227,9 +234,9 @@ function parseLine(line)
       end
     end
     table.insert(nTree, line.name)
-    table.insert(nTree, "={\n__initfunction = ")
+    table.insert(nTree, "={\nnew = ")
     if constructor ~= nil then
-      table.insert(constructor.vars, 1, "self")
+      --table.insert(constructor.vars, 1, "self")
       table.insert(nTree, parseFunctionVars(constructor.vars))
     else
       table.insert(nTree, "function()\n")
@@ -244,7 +251,7 @@ function parseLine(line)
     else
         annotateInstanceVariables({vars = classvars, methods = methods}, constructor.vars, constructor.val, "this")
     end
-    table.insert(nTree, "}\nsetmetatable(this, self)\n")
+    table.insert(nTree, "}\nsetmetatable(this," .. line.name .. ")\n")
      for _,v in ipairs(constructor.val) do
       table.insert(nTree, parseLine(v))
     end
@@ -271,7 +278,7 @@ function parseLine(line)
     table.insert(nTree, line.var)
     table.insert(nTree, "=")
     table.insert(nTree, line.class)
-    table.insert(nTree, ":__initfunction")
+    table.insert(nTree, ".new")
     table.insert(nTree,"(")
     for _, arg in ipairs(line.args.val) do
         table.insert(nTree,parseAssignment(arg))

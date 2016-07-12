@@ -85,7 +85,7 @@ local opOverload = lpeg.P(
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup"+ lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
+  S = ( lcomment + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -163,7 +163,7 @@ lif =
 ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
     function(val) return {type="brackets", val=val} end,
 
-ltablebody = (lpeg.V"lclassfunction" + lpeg.V"lclassreference" + ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
+ltablebody = (lpeg.V"lclassfunction" + lpeg.V"lcclassreference" + lpeg.V"lclassreference" + ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
 
 ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
     function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
@@ -184,9 +184,15 @@ lclassinit = (lvar * ws * lvar * lpeg.V"lfunccallparams" * ws)/
 
 lclassreference = ("->" * lvar)/
   function(val) return {type = "classreference", val = val.val} end,
-  
+lcclassreference = (":>" * lvar)/
+  function(val) return {type = "cclassreference", val = val.val} end,  
 lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
   function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
+
+lcclass = ("cclass" * ws * lvar * ws * "{" * ws *
+  (((lpeg.V"lfunccall" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+  ws * "}" * ws)/
+    function(name,...) return {type = "cclass", name = name.val, val = {...}} end,
 }
 
 function lex(script)
