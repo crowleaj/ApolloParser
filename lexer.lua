@@ -7,7 +7,7 @@
 
 require "lpeg"
 
-local ws = ((lpeg.P(" ") + "\n"+"\t")^0)
+local ws = ((lpeg.P(" ") + "\r" + "\n" + "\t")^0)
 
 local lnum = (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
   function (num) return {type = "numberconst", val = num} end
@@ -190,5 +190,5 @@ lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
 }
 
 function lex(script)
-    return lpeg.Ct((cfg)^0):match(script)
+    return lpeg.Ct(ws * (cfg)^0):match(script)
 end
