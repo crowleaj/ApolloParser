@@ -2,7 +2,7 @@ require "parser"
 
 runfile("test.ns",false)
 
---local m = Entity:__initfunction("Alice")
+
 --print(m.x)
 --[[Entity = {
 	__init = function (self,name)

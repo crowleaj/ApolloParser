@@ -18,6 +18,8 @@ for i from 18 to 25 by 2 {
   print(i)
 }
 var nums = [5]
+nums[1] = 2
+print(nums[1])
 for index,num in nums array {
   print("Testing for loop!")
 }

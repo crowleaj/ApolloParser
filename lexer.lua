@@ -85,11 +85,11 @@ local opOverload = lpeg.P(
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"ltablelookup"+ lpeg.V"lclass" + lpeg.V"lassignment" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
+  S = ( lcomment + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup"+ lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
-    ((lvar * ws *
+    (((lpeg.V"ltablelookup" + lvar) * ws *
       ("=" * ws * (lpeg.V"ltablelookup" + lpeg.V"ltable" + lpeg.V"lfunc" + lpeg.V"larith" + lval)))/
         function(var,val) return {type = "assignment", var = var, val = val} end
       ) *ws,
