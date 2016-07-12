@@ -1,0 +1,26 @@
+{
+    "name": "ns",
+    "displayName": "Nitrolang",
+    "description": "Nitro language syntax highlighting",
+    "version": "0.0.1",
+    "publisher": "Sp4rkfun",
+    "engines": {
+        "vscode": "^1.0.0"
+    },
+    "categories": [
+        "Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "ns",
+            "aliases": ["NitroScript"],
+            "extensions": ["ns"],
+            "configuration": "./ns.configuration.json"
+        }],
+        "grammars": [{
+            "language": "ns",
+            "scopeName": "source.untitled",
+            "path": "./syntaxes/ns.tmLanguage"
+        }]
+    }
+}
