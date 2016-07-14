@@ -4,15 +4,17 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
+
 --http://lua-users.org/wiki/CopyTable
-function shallowcopy(orig)
+function deepcopy(orig)
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
         copy = {}
-        for orig_key, orig_value in pairs(orig) do
-            copy[orig_key] = orig_value
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
         end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
     else -- number, string, boolean, etc
         copy = orig
     end
@@ -43,67 +45,63 @@ function contains(pair, nopair, key)
     return false
 end
 
-function annotateInstanceVariables(vars,funcvars,code,ann)
-  for _,inst in pairs(code) do
-    local type = inst.type
-    if type == "variable" then
-      if contains(vars, funcvars, inst.val) then
-        inst.val = ann .. "." .. inst.val
-      end
-    elseif type == "classvariable" then
+function annotateSingleInstanceVariables(vars, funcvars, inst, ann)
+  local type = inst.type
+  if type == "variable" then
+    if contains(vars, funcvars, inst.val) then
       inst.val = ann .. "." .. inst.val
-    elseif type == "assignment" then
-      if inst.var.type == "classvariable" or contains(vars, funcvars, inst.var.val) then
-        inst.var.val = ann .. "." .. inst.var.val
-      end
-      if inst.val.type == "function" then
-        annotateInstanceVariables(vars, funcvars, inst.val.val, ann)
-      elseif inst.val.type == "variable" then
-        if contains(vars, funcvars, inst.val.val) then
-          inst.val.val = ann .. "." .. inst.val.val
-        end
-      elseif inst.val.type == "classvariable" then
-        inst.val.val = ann .. "." .. inst.val.val
-      end
-    elseif type == "forloop" then
-      type = inst.iter.type
-      local copy = shallowcopy(funcvars)
-      if type == "fornormal" then
-        if inst.iter.first.type == "classvariable" or contains(vars, funcvars, inst.iter.first.val) then
-          inst.iter.first.val = ann .. "." .. inst.iter.var
-        end
-        if inst.iter.last.type == "classvariable" or contains(vars, funcvars, inst.iter.last.val) then
-          inst.iter.last.val = ann .. "." .. inst.iter.last.val
-        end
-        if inst.iter.step.type == "classvariable" or contains(vars, funcvars, inst.iter.step.val) then
-          inst.iter.step.val = ann .. "." .. inst.iter.step.val
-        end
-        table.insert(copy,inst.iter.var)
-      elseif type == "forenhanced" then
-        if inst.iter.var.type == "classvariable" or contains(vars, funcvars, inst.iter.var.val) then
-          inst.iter.var.val = ann .. "." .. inst.iter.var.val
-        end
-        table.insert(copy,inst.iter.vals.k)
-        table.insert(copy,inst.iter.vals.v)
-      end
-      annotateInstanceVariables(vars, copy, inst.val, ann)
-    elseif type == "functioncall" then
-      annotateInstanceVariables(vars, funcvars, inst.args, ann)
-      if contains(vars, funcvars, inst.name.val) then
-        inst.name.val = ann .. ":" .. inst.name.val
-      end
-    elseif type == "params" then
-      annotateInstanceVariables(vars, funcvars, inst.val, ann)
-    elseif type == "tablelookup" then
-      if inst.name.type == "classvariable" or contains(vars, funcvars, inst.name.val) then
-          inst.iter.first.val = ann .. "." .. inst.iter.var
-      end
-      annotateInstanceVariables(vars, funcvars, inst.val, ann)
-    elseif type == "arithmetic" then
-      annotateInstanceVariables(vars, funcvars, inst.val, ann)
-    --todo add if block
-    else
-      print(type)
     end
+  elseif type == "classvariable" then
+    inst.val = ann .. "." .. inst.val
+  elseif type == "function" then
+    local copy = deepcopy(funcvars)
+    for _,v in ipairs(inst.vars) do
+      table.insert(copy.vars, inst.val)
+    end
+    annotateInstanceVariables(vars, funcvars, inst.vars, ann)
+    annotateInstanceVariables(vars, copy, inst.val, ann)
+  elseif type == "assignment" then
+    annotateSingleInstanceVariables(vars, funcvars, inst.var, ann)
+    annotateSingleInstanceVariables(vars, funcvars, inst.val, ann)
+  elseif type == "arithmetic" or type == "params" or type == "else" then
+    annotateInstanceVariables(vars, funcvars, inst.val, ann)
+  elseif type == "parentheses" or type == "brackets" then
+    annotateSingleInstanceVariables(vars, funcvars, inst.val, ann)
+  elseif type == "tablelookup" then
+    annotateSingleInstanceVariables(vars, funcvars, inst.name, ann)
+    annotateInstanceVariables(vars, funcvars, inst.val, ann)
+  elseif type == "functioncall" then
+    annotateInstanceVariables(vars, funcvars, inst.args, ann)
+    if contains(vars, funcvars, inst.name.val) then
+      inst.name.val = ann .. ":" .. inst.name.val
+    end
+  elseif type == "ifblock" then
+    annotateInstanceVariables(vars, funcvars, inst.val, ann)
+  elseif type == "switch" or type == "case" or type == "if" or type == "elseif" then
+    annotateSingleInstanceVariables(vars, funcvars, inst.cond, ann)
+    annotateInstanceVariables(vars, funcvars, inst.val, ann)
+  elseif type == "forloop" then
+    annotateSingleInstanceVariables(vars, funcvars, inst.iter, ann)
+    type = inst.iter.type
+    local copy = deepcopy(funcvars)
+    if type == "fornormal" then
+      annotateSingleInstanceVariables(vars, funcvars, inst.iter.first, ann)
+      annotateSingleInstanceVariables(vars, funcvars, inst.iter.last, ann)
+      annotateSingleInstanceVariables(vars, funcvars, inst.iter.step, ann)
+      table.insert(copy.vars, inst.iter.var)
+    elseif type == "forenhanced" then
+      annotateSingleInstanceVariables(vars, funcvars, inst.iter.var, ann)
+      table.insert(copy.vars, inst.iter.vals.k)
+      table.insert(copy.vars, inst.iter.vals.v)
+    end
+    annotateInstanceVariables(vars, copy, inst.val, ann)
+  else
+    print(type)
+  end
+end
+
+function annotateInstanceVariables(vars, funcvars, code, ann)
+  for _,inst in pairs(code) do
+    annotateSingleInstanceVariables(vars, funcvars, inst, ann)
   end
 end

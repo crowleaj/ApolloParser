@@ -178,10 +178,10 @@ function parseLine(line)
     table.insert(nTree, parseAssignment(line.val))
     table.insert(nTree, "\n")
   elseif type == "declaration" then
-  if line.scope == "local" then
-    table.insert(nTree,"local ")
-  end
-    table.insert(nTree, line.var.val)
+    if line.scope == "local" then
+      table.insert(nTree,"local ")
+    end
+    table.insert(nTree, parseAssignment(line.var))
     table.insert(nTree, "=")
     table.insert(nTree, parseAssignment(line.val))
     table.insert(nTree, "\n")
@@ -312,7 +312,6 @@ function parseLine(line)
     table.insert(nTree, "else\n")
     table.insert(nTree, parseFunctionBody(line.val))
   elseif type == "switch" then
-    print(inspect(line))
     local switchvar = uniquevar()
     table.insert(nTree, "local ")
     table.insert(nTree, switchvar)
