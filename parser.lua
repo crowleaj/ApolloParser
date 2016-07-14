@@ -13,7 +13,7 @@ local inspect = require "inspect"
 local __varval = 0
 function uniquevar()
   __varval = __varval + 1
-  return "var" .. __varval
+  return "___var" .. __varval
 end
 
 function parseAssignment(rhs)
@@ -324,17 +324,18 @@ function parseLine(line)
       type = line.type 
       if type == "case" then
         table.insert(nTree, parseAssignment(line.cond))
-        table.insert(nTree, "\n")
+        table.insert(nTree, "==")
+        table.insert(nTree, switchvar)
+        table.insert(nTree, " then\n")
         table.insert(nTree, parseFunctionBody(line.val))
         table.insert(nTree, "elseif ")
       else
         table.remove(nTree)
         table.insert(nTree, "else\n")
-        table.insert(nTree, parseFunctionBody(line))
+        table.insert(nTree, parseFunctionBody(line.val))
       end
     end
-    print(inspect(line.val))
-    if line.val[#line.val].type == "default" then
+    if line.val[#line.val].type ~= "default" then
       table.remove(nTree)
     end
     table.insert(nTree,"end\n")

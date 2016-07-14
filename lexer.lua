@@ -9,16 +9,16 @@ require "lpeg"
 
 local ws = ((lpeg.P(" ") + "\r" + "\n" + "\t")^0)
 
-local lnum = (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
+local lnum = (lpeg.P"-"^-1) *(((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
   function (num) return {type = "numberconst", val = num} end
 local lstring = (("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))/
   function  (string) return {type = "stringconst", val = string}  end
 
-
+local lkeywords = (lpeg.P"if" + "or" + "else" + "case" + "default" + "for")
 local lconst = (lnum + lstring)
-local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
+local lvarnorm = (((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))-lkeywords)/
   function(var) return {type = "variable", val = var} end)
-local lvarclass = lpeg.P"this->" * (( ("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))/
+local lvarclass = lpeg.P"this->" * ((( ("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))-lkeywords)/
   function(var) return {type = "classvariable", val = var} end)
 local lvar = lvarclass + lvarnorm
 local lval = lconst + lvar

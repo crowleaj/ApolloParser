@@ -88,7 +88,18 @@ else {
         switch(key){
             case left
                 ld = true
-                                    y = y * 0.5
+                if y != 0 {
+                    y = y * 0.5
                     x = -0.5
-            
+                }
+                else { x = -1 }
+            case right
+                rd = true
+                if y != 0 {
+                    y = y * 0.5
+                    x = 0.5
+                }
+                else { x = 1 }
+						default
+							print("fault")
         }
