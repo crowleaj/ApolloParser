@@ -193,8 +193,11 @@ lcclass = ("cclass" * ws * lvar * ws * "{" * ws *
   (((lpeg.V"lfunccall" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
   ws * "}" * ws)/
     function(name,...) return {type = "cclass", name = name.val, val = {...}} end,
-}
+},
+lswitch = "switch(" * ws * lpeg.V"lrhs" * ws * ")" * 
+ws * (("case" * ws * lpeg.V"lrhs" * ws * (lpeg.V"S"^0))^0) * (("default" * ws * (lpeg.V"S"^0))^-1),
 
+lrhs = (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lpeg.V"larith" + lval),
 function lex(script)
     return lpeg.Ct(ws * (cfg)^0):match(script)
 end
