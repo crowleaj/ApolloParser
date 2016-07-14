@@ -186,8 +186,8 @@ lcclass = ("cclass" * ws * lvar * ws * "{" * ws *
   ws * "}" * ws)/
     function(name,...) return {type = "cclass", name = name.val, val = {...}} end,
 
-lswitch = "switch(" * ws * lpeg.V"lrhs" * ws * ")" *
-ws * (("case" * ws * lpeg.V"lrhs" * ws * (lpeg.V"S"^0))^0) * (("default" * ws * (lpeg.V"S"^0))^-1),
+lswitch = "switch(" * ws * lpeg.V"larith" * ws * ")" *
+ws * ((("case" * ws * lpeg.V"lrhs" * ws * (lpeg.V"S"^0))/function(case, ...) return {type = "case", cond = case, val = {...}} end)^0) * ((("default" * ws * (lpeg.V"S"^0))/ function(...) return {type = "default", val = {...}} end)^-1),
 
 lrhs = (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval), --removed larith
 }

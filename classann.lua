@@ -101,6 +101,7 @@ function annotateInstanceVariables(vars,funcvars,code,ann)
       annotateInstanceVariables(vars, funcvars, inst.val, ann)
     elseif type == "arithmetic" then
       annotateInstanceVariables(vars, funcvars, inst.val, ann)
+    --todo add if block
     else
       print(type)
     end
