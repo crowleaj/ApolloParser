@@ -74,4 +74,14 @@ cclass vec3{
 
 --vec3 vec(1,2,3)
 --print(vec:>z)
+var q = 11
 
+if (q < 5 || q == 11) {
+  print(q)
+}
+or q < 10 {
+  print(q)
+}
+else {
+  print("else statement")
+}

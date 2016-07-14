@@ -68,12 +68,10 @@ local lforen = (
       + (lpeg.P"array"/"ipairs")
   ))/
       function(kv,var,iter) return {type = "forenhanced", vars = kv, var = var.val, iter = iter} end
-  
-local arithOp = (lpeg.S("*/+-") + (lpeg.P"||"/"or") + (lpeg.P"&&"/"and"))/
+
+local arithOp = (lpeg.S("*/+-") + (lpeg.P"||"/" or ") + (lpeg.P"&&"/" and ") + lpeg.S("<>") + "<=" + ">=" + "==" + (lpeg.P"!="/"~="))/
   function (operator) return {type = "operator",val = operator} end
 
-local lcompare = lpeg.C(lpeg.S("<>") + "<=" + ">=" + "==")/
-  function (operator) return {type = "comparison",val = operator} end
 
 local opOverload = lpeg.P(
   (lvar * ws * arithOp * "=" * ws * lvar)/
@@ -85,7 +83,7 @@ local opOverload = lpeg.P(
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lif" + lpeg.V"lforloop")^1, 
+  S = ( lcomment + lpeg.V"lif" + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -149,9 +147,10 @@ lbody = (
   lpeg.P"}" * ws),
   
 lif = 
-  "if" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * lpeg.V"lbody" *
-  ((lpeg.P"or" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * lpeg.V"lbody")^0) *
-  (((lpeg.P"else" * ws * lpeg.V"lbody")^-1)/ function(...) return {name = "else", val ={...}} end),
+  ((("if" * ws * lpeg.V"larith" * ws * lpeg.V"lbody")/ function(condition, ...) return {type = "if", cond = condition, val = {...}} end) *
+  (((lpeg.P"or" * ws * lpeg.V"larith" * ws * lpeg.V"lbody")/ function(condition, ...) return {type = "elseif", cond = condition, val = {...}} end)^0) *
+  (((lpeg.P"else" * ws * lpeg.V"lbody")/ function(...) return {type = "else", val ={...}} end)^-1))/
+    function(...) return {type = "ifblock", val = {...}} end,
   
 ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
     function(val) return {type="brackets", val=val} end,

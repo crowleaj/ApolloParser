@@ -99,6 +99,8 @@ function annotateInstanceVariables(vars,funcvars,code,ann)
           inst.iter.first.val = ann .. "." .. inst.iter.var
       end
       annotateInstanceVariables(vars, funcvars, inst.val, ann)
+    elseif type == "arithmetic" then
+      annotateInstanceVariables(vars, funcvars, inst.val, ann)
     else
       print(type)
     end

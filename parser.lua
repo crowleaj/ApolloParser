@@ -27,6 +27,7 @@ function parseAssignment(rhs)
     for _,op in ipairs(rhs.val) do
       table.insert(nTree, parseAssignment(op))
     end
+    print(table.concat(nTree))
     return table.concat(nTree)
   elseif type == "table" then
     local nTree = {}
@@ -269,8 +270,6 @@ function parseLine(line)
     table.insert(nTree, ".__index=")
     table.insert(nTree, line.name)
     table.insert(nTree, "\n")
-  elseif type == "comment" then
-    --print(line.val)
   elseif type == "classinit" then
     if line.scope == "local" then
       table.insert(nTree, "local ")
@@ -289,6 +288,27 @@ function parseLine(line)
     end
     table.insert(nTree,")")
     table.insert(nTree, "\n")
+  elseif type == "ifblock" then
+    for _, line in ipairs(line.val) do
+      table.insert(nTree, parseLine(line))
+    end
+      table.insert(nTree, "end\n")
+  elseif type == "if" then
+    table.insert(nTree, "if ")
+    print(inspect(line.cond))
+    table.insert(nTree, parseAssignment(line.cond))
+    table.insert(nTree, " then\n")
+    table.insert(nTree, parseFunctionBody(line.val))
+  elseif type == "elseif" then
+    table.insert(nTree, "elseif ")
+    table.insert(nTree, parseAssignment(line.cond))
+    table.insert(nTree, " then\n")
+    table.insert(nTree, parseFunctionBody(line.val))
+  elseif type == "else" then
+    table.insert(nTree, "else\n")
+    table.insert(nTree, parseFunctionBody(line.val))
+  elseif type == "comment" then
+    --print(line.val)
   else
     print(type)
     --print("unrecognized instruction: " .. inspect(line))

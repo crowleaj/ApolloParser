@@ -32,13 +32,4 @@ print(tryit[1](0)[1]())
 
 
 var q = 6
-if q < 5 {
-  print(q)
-}
-or q < 10 {
-  print(q)
-}
-else {
-  print("else statement")
-}
 ]]
