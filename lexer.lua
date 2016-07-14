@@ -69,7 +69,7 @@ local lforen = (
   ))/
       function(kv,var,iter) return {type = "forenhanced", vars = kv, var = var.val, iter = iter} end
   
-local arithOp = (lpeg.S("*/+-"))/
+local arithOp = (lpeg.S("*/+-") + (lpeg.P"||"/"or") + (lpeg.P"&&"/"and"))/
   function (operator) return {type = "operator",val = operator} end
 
 local lcompare = lpeg.C(lpeg.S("<>") + "<=" + ">=" + "==")/
@@ -121,10 +121,10 @@ local cfg = lpeg.P{
   
   larith = 
     ((
-      (lpeg.V"lfunccall" + lnumval) * 
+      (lpeg.V"lrhs") * 
       (
-        ((ws * arithOp * ws * (lpeg.V"lfunccall" + lnumval))^1)
-        + (ws * arithOp * ws * lpeg.V"larithbal")))/
+        ((ws * arithOp * ws * lpeg.V"lrhs")
+        + (ws * arithOp * ws * lpeg.V"larithbal"))^0))/
           function ( ... )
             return {type = "arithmetic", val = {...}}
           end
@@ -149,16 +149,9 @@ lbody = (
   lpeg.P"}" * ws),
   
 lif = 
-  "if" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * 
-  (
-    (lpeg.V"lbody"  * 
-       ((lpeg.P"or" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * 
-      lpeg.V"lbody")^0) *
-      lpeg.P"else" * ws * lpeg.V"lbody"
-  )
-    + lpeg.P"else" * ws * lpeg.V"lbody"
-    + lpeg.V"lbody"
-    ),
+  "if" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * lpeg.V"lbody" *
+  ((lpeg.P"or" * ws * (lpeg.V"lfunccall" + lval) * ws * lcompare * ws * (lpeg.V"lfunccall" + lval) * ws * lpeg.V"lbody")^0) *
+  (((lpeg.P"else" * ws * lpeg.V"lbody")^-1)/ function(...) return {name = "else", val ={...}} end),
   
 ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
     function(val) return {type="brackets", val=val} end,
@@ -193,11 +186,12 @@ lcclass = ("cclass" * ws * lvar * ws * "{" * ws *
   (((lpeg.V"lfunccall" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
   ws * "}" * ws)/
     function(name,...) return {type = "cclass", name = name.val, val = {...}} end,
-},
-lswitch = "switch(" * ws * lpeg.V"lrhs" * ws * ")" * 
+
+lswitch = "switch(" * ws * lpeg.V"lrhs" * ws * ")" *
 ws * (("case" * ws * lpeg.V"lrhs" * ws * (lpeg.V"S"^0))^0) * (("default" * ws * (lpeg.V"S"^0))^-1),
 
-lrhs = (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lpeg.V"larith" + lval),
+lrhs = (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval), --removed larith
+}
 function lex(script)
     return lpeg.Ct(ws * (cfg)^0):match(script)
 end

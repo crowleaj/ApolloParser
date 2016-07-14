@@ -1,6 +1,6 @@
 require "parser"
 
-runfile("test.ns",false)
+runfile("test.ns",true)
 
 
 --print(m.x)

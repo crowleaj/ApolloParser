@@ -72,6 +72,6 @@ cclass vec3{
 }
 
 
-vec3 vec(1,2,3)
-print(vec:>z)
+--vec3 vec(1,2,3)
+--print(vec:>z)
 
