@@ -83,7 +83,7 @@ local opOverload = lpeg.P(
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
-  S = ( lcomment + lpeg.V"lif" + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
+  S = ( lcomment + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lglobalclassinit" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
   --((lpeg.P(" ") +"\n")^1)/"\n",
   
   lassignment = 
@@ -186,8 +186,10 @@ lcclass = ("cclass" * ws * lvar * ws * "{" * ws *
   ws * "}" * ws)/
     function(name,...) return {type = "cclass", name = name.val, val = {...}} end,
 
-lswitch = "switch(" * ws * lpeg.V"larith" * ws * ")" *
-ws * ((("case" * ws * lpeg.V"lrhs" * ws * (lpeg.V"S"^0))/function(case, ...) return {type = "case", cond = case, val = {...}} end)^0) * ((("default" * ws * (lpeg.V"S"^0))/ function(...) return {type = "default", val = {...}} end)^-1),
+lswitch = ("switch(" * ws * lpeg.V"larith" * ws * ")" * ws * "{" *
+ws * ((("case" * ws * lpeg.V"lrhs" * ws * (lpeg.V"S"^0))/function(case, ...) return {type = "case", cond = case, val = {...}} end)^0) * 
+((("default" * ws * (lpeg.V"S"^0))/ function(...) return {type = "default", val = {...}} end)^-1) * ws * "}" * ws)/
+  function(cond, ...) return {type = "switch", cond = cond, val = {...}} end,
 
 lrhs = (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval), --removed larith
 }

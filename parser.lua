@@ -10,6 +10,12 @@ require "classann"
 
 local inspect = require "inspect"
 
+local __varval = 0
+function uniquevar()
+  __varval = __varval + 1
+  return "var" .. __varval
+end
+
 function parseAssignment(rhs)
   local type = rhs.type
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "stringconst" or type == "operator" then
@@ -27,7 +33,6 @@ function parseAssignment(rhs)
     for _,op in ipairs(rhs.val) do
       table.insert(nTree, parseAssignment(op))
     end
-    print(table.concat(nTree))
     return table.concat(nTree)
   elseif type == "table" then
     local nTree = {}
@@ -295,7 +300,6 @@ function parseLine(line)
       table.insert(nTree, "end\n")
   elseif type == "if" then
     table.insert(nTree, "if ")
-    print(inspect(line.cond))
     table.insert(nTree, parseAssignment(line.cond))
     table.insert(nTree, " then\n")
     table.insert(nTree, parseFunctionBody(line.val))
@@ -307,6 +311,33 @@ function parseLine(line)
   elseif type == "else" then
     table.insert(nTree, "else\n")
     table.insert(nTree, parseFunctionBody(line.val))
+  elseif type == "switch" then
+    print(inspect(line))
+    local switchvar = uniquevar()
+    table.insert(nTree, "local ")
+    table.insert(nTree, switchvar)
+    table.insert(nTree, "=")
+    table.insert(nTree, parseAssignment(line.cond))
+    table.insert(nTree, "\n")
+    table.insert(nTree, "if ")
+    for _, line in ipairs(line.val) do
+      type = line.type 
+      if type == "case" then
+        table.insert(nTree, parseAssignment(line.cond))
+        table.insert(nTree, "\n")
+        table.insert(nTree, parseFunctionBody(line.val))
+        table.insert(nTree, "elseif ")
+      else
+        table.remove(nTree)
+        table.insert(nTree, "else\n")
+        table.insert(nTree, parseFunctionBody(line))
+      end
+    end
+    print(inspect(line.val))
+    if line.val[#line.val].type == "default" then
+      table.remove(nTree)
+    end
+    table.insert(nTree,"end\n")
   elseif type == "comment" then
     --print(line.val)
   else
@@ -333,6 +364,7 @@ end
 
 function run(script,output)
   local p = lex(script)
+  print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

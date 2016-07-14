@@ -84,4 +84,11 @@ or q < 10 {
 }
 else {
   print("else statement")
-}
+} 
+        switch(key){
+            case left
+                ld = true
+                                    y = y * 0.5
+                    x = -0.5
+            
+        }

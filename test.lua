@@ -1,7 +1,7 @@
 require "parser"
 
 runfile("test.ns",true)
-
+--runfile("../scripts/controller.ns",true)
 
 --print(m.x)
 --[[Entity = {
