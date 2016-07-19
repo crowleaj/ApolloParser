@@ -6,6 +6,8 @@
 
 require "lexer"
 
+require "parserfor"
+require "parserclass"
 require "classann"
 
 local inspect = require "inspect"
@@ -192,89 +194,15 @@ function parseLine(line)
     table.insert(nTree,parseAssignment(line))
     table.insert(nTree, "\n")
   elseif type == "forloop" then
-    local iter = line.iter
-    type = iter.type 
-    table.insert(nTree, "for ")
-    if type == "fornormal" then
-      table.insert(nTree, iter.var)
-      table.insert(nTree, "=")
-      table.insert(nTree, iter.first.val)
-      table.insert(nTree, ",")
-      table.insert(nTree, iter.last.val)
-      table.insert(nTree, ",")
-      table.insert(nTree, iter.step.val)
-    elseif type == "forenhanced" then
-      table.insert(nTree, iter.vars.k)
-      table.insert(nTree, ",")
-      table.insert(nTree, iter.vars.v)
-      table.insert(nTree, " in ")
-      table.insert(nTree, iter.iter)
-      table.insert(nTree, "(")
-      table.insert(nTree, iter.var)
-      table.insert(nTree, ")")
-    end
-    table.insert(nTree, " do\n")
-    for _,line in ipairs(line.val) do
-      table.insert(nTree, parseLine(line))
-    end
-    table.insert(nTree, "end\n")
+    parseFor(line)
   elseif type == "class" then
-    classvars = {}
-    assignments = {}
-    methods = {}
-    constructor = nil
-    for _,v in ipairs(line.val) do
-      type = v.type
-      if type == "variable" then
-        table.insert(classvars, v.val)
-      elseif type == "assignment" then
-        table.insert(classvars, v.var.val)
-        table.insert(assignments, v)
-      elseif type == "classmethod" then
-        if v.name == line.name then
-          constructor = v
-        else
-          table.insert(methods,v)
-        end
-      else
-      end
-    end
+    parseClass(line)
+  elseif type == "cclass" then
+    table.insert(nTree, "local ")
     table.insert(nTree, line.name)
-    table.insert(nTree, "={\nnew = ")
-    if constructor ~= nil then
-      --table.insert(constructor.vars, 1, "self")
-      table.insert(nTree, parseFunctionVars(constructor.vars))
-    else
-      table.insert(nTree, "function()\n")
-    end
-    table.insert(nTree, "this = {")
-    if constructor ~= nil then
-      for _,v in ipairs(assignments) do
-        table.insert(nTree, parseLine(v))
-        table.insert(nTree, ",")
-      end
-        annotateInstanceVariables({vars = classvars, methods = methods}, constructor.vars, constructor.val, "this")
-    else
-        annotateInstanceVariables({vars = classvars, methods = methods}, constructor.vars, constructor.val, "this")
-    end
-    table.insert(nTree, "}\nsetmetatable(this," .. line.name .. ")\n")
-     for _,v in ipairs(constructor.val) do
-      table.insert(nTree, parseLine(v))
-    end
-    table.insert(nTree, "return this\nend\n")
-    for _,fcn in ipairs(methods) do
-      table.insert(nTree, ",")
-      table.insert(nTree, fcn.name)
-      table.insert(nTree, "=")
-      table.insert(fcn.vars, 1, "self")
-      annotateInstanceVariables({vars = classvars, methods = methods}, fcn.vars, fcn.val, "self")
-      table.insert(nTree, parseFunction(fcn))
-    end
-    table.insert(nTree, "}\n")
+    table.insert(nTree, "=")
     table.insert(nTree, line.name)
-    table.insert(nTree, ".__index=")
-    table.insert(nTree, line.name)
-    table.insert(nTree, "\n")
+    table.insert(nTree, ".new\n")
   elseif type == "classinit" then
     if line.scope == "local" then
       table.insert(nTree, "local ")
