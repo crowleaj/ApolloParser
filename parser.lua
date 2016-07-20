@@ -7,6 +7,7 @@
 require "lexer"
 
 require "parser/value"
+require "parser/assignment"
 require "parser/function"
 require "parser/ifblock"
 require "parser/for"
@@ -15,61 +16,6 @@ require "parser/class"
 require "classann"
 
 local inspect = require "inspect"
-
-function parseTableLookup(ref)
-    local nTree = {}
-    local type = ref.type
-    if type == "brackets" then
-      table.insert(nTree, "[")
-      table.insert(nTree, parseValue(ref.val))
-      table.insert(nTree, "]")
-    elseif type == "dotreference" then
-      table.insert(nTree, ".")
-      table.insert(nTree, ref.val)
-    elseif type == "params" then
-      table.insert(nTree,"(")
-      if #ref.val > 0 then
-        for _,v in ipairs(ref.val) do
-          table.insert(nTree, parseValue(v))
-          table.insert(nTree, ",")
-        end
-          table.remove(nTree)
-      end
-      table.insert(nTree,")")
-    else
-      return parseValue(ref)
-    end
-    return table.concat(nTree)
-end
-
-function parseAssignment(line)
-  local nTree = {}
-  local type = line.type
-  if line.scope == "local" then
-    table.insert(nTree,"local ")
-  end
-    table.insert(nTree, parseValue(line.var))
-    table.insert(nTree, "=")
-  if type == "declaration" or type == "assignment" then
-    table.insert(nTree, parseValue(line.val))
-  elseif type == "classinit" then
-    table.insert(nTree, line.class)
-    table.insert(nTree, ".new")
-    table.insert(nTree,"(")
-    for _, arg in ipairs(line.args.val) do
-        table.insert(nTree,parseValue(arg))
-        table.insert(nTree,",")
-    end
-    if #line.args.val >0 then 
-      table.remove(nTree)
-    end
-    table.insert(nTree,")")
-  else
-    print("ERROR: Invalid declaration type")
-  end
-  table.insert(nTree, "\n")
-  return table.concat(nTree)
-end
 
 function parseLine(line)
   local nTree = {}

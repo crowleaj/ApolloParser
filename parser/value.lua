@@ -92,3 +92,29 @@ function parseValue(rhs)
     return "ERR"
   end
 end
+
+function parseTableLookup(ref)
+    local nTree = {}
+    local type = ref.type
+    if type == "brackets" then
+      table.insert(nTree, "[")
+      table.insert(nTree, parseValue(ref.val))
+      table.insert(nTree, "]")
+    elseif type == "dotreference" then
+      table.insert(nTree, ".")
+      table.insert(nTree, ref.val)
+    elseif type == "params" then
+      table.insert(nTree,"(")
+      if #ref.val > 0 then
+        for _,v in ipairs(ref.val) do
+          table.insert(nTree, parseValue(v))
+          table.insert(nTree, ",")
+        end
+          table.remove(nTree)
+      end
+      table.insert(nTree,")")
+    else
+      return parseValue(ref)
+    end
+    return table.concat(nTree)
+end
