@@ -30,7 +30,9 @@ function parseClass(line)
     table.insert(nTree, "={\nnew = ")
     if constructor ~= nil then
         --table.insert(constructor.vars, 1, "self")
-        table.insert(nTree, parseFunctionVars(constructor.vars))
+        table.insert(nTree, "function")
+        table.insert(nTree, parseValues(constructor.vars))
+        table.insert(nTree, "\n")
     else
         table.insert(nTree, "function()\n")
     end
@@ -53,7 +55,7 @@ function parseClass(line)
         table.insert(nTree, ",")
         table.insert(nTree, fcn.name)
         table.insert(nTree, "=")
-        table.insert(fcn.vars, 1, "self")
+        table.insert(fcn.vars, 1, {type = "variable", val = "self"})
         annotateInstanceVariables({vars = classvars, methods = methods}, fcn.vars, fcn.val, "self")
         table.insert(nTree, parseFunction(fcn))
     end
@@ -62,9 +64,10 @@ function parseClass(line)
     table.insert(nTree, ".__index=")
     table.insert(nTree, line.name)
     table.insert(nTree, "\n")
-    table.insert(nTree, "local ")
+    --[[table.insert(nTree, "local ")
     table.insert(nTree, line.name)
     table.insert(nTree, "=")
     table.insert(nTree, line.name)
-    table.insert(nTree, ".new\n")
+    table.insert(nTree, ".new\n")--]]
+    return table.concat(nTree)
 end

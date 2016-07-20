@@ -6,101 +6,22 @@
 
 require "lexer"
 
-require "parserfor"
-require "parserclass"
+require "parser/value"
+require "parser/function"
+require "parser/ifblock"
+require "parser/for"
+require "parser/switch"
+require "parser/class"
 require "classann"
 
 local inspect = require "inspect"
-
-local __varval = 0
-function uniquevar()
-  __varval = __varval + 1
-  return "___var" .. __varval
-end
-
-function parseAssignment(rhs)
-  local type = rhs.type
-  if type == "variable" or type == "classvariable" or type == "numberconst" or type == "stringconst" or type == "operator" then
-    return rhs.val
-  elseif type == "function" then
-    return parseFunction(rhs)
-  elseif type == "parentheses" then
-    local nTree = {}
-    table.insert(nTree, "(")
-    table.insert(nTree, parseAssignment(rhs.val))
-    table.insert(nTree, ")")
-    return table.concat(nTree)
-  elseif type == "arithmetic" then
-    local nTree = {}
-    for _,op in ipairs(rhs.val) do
-      table.insert(nTree, parseAssignment(op))
-    end
-    return table.concat(nTree)
-  elseif type == "table" then
-    local nTree = {}
-    table.insert(nTree,"{")
-    for _,arg in ipairs(rhs.val) do
-         table.insert(nTree,parseAssignment(arg))
-         table.insert(nTree,",")
-    end
-    if #rhs.val > 0 then
-      table.remove(nTree)
-    end
-    table.insert(nTree,"}")
-    return table.concat(nTree)
-  elseif type == "tablelookup" then
-    local nTree = {}
-    table.insert(nTree, rhs.name.val)
-    for _,val in ipairs(rhs.val) do
-      table.insert(nTree,parseTableLookup(val))
-    end
-    return table.concat(nTree)
-  elseif type == "functioncall" then
-    local nTree = {}
-    table.insert(nTree, parseAssignment(rhs.name))
-    for _, val in ipairs(rhs.args) do
-      table.insert(nTree,"(")
-      for _, arg in ipairs(val.val) do
-        table.insert(nTree,parseAssignment(arg))
-        table.insert(nTree,",")
-      end
-      if #val.val >0 then 
-        table.remove(nTree)
-      end
-      table.insert(nTree,")")
-    end
-    return table.concat(nTree)
-  elseif type == "classreference" then
-    local nTree = {}
-    --table.insert(nTree, rhs.var)
-    table.insert(nTree, ".")
-    table.insert(nTree, rhs.val)
-    return table.concat(nTree)
-  elseif type == "cclassreference" then
-    local nTree = {}
-    --table.insert(nTree, rhs.var)
-    table.insert(nTree, ":")
-    table.insert(nTree, rhs.val)
-    table.insert(nTree, "()")
-    return table.concat(nTree)
-  elseif type == "classmethodcall" then
-    local nTree = {}
-    table.insert(nTree, ":")
-    table.insert(nTree, rhs.val)
-    table.insert(nTree, parseFunctionArgs(rhs.args))
-    return table.concat(nTree)
-  else
-    print(type)
-    return "ERR"
-  end
-end
 
 function parseTableLookup(ref)
     local nTree = {}
     local type = ref.type
     if type == "brackets" then
       table.insert(nTree, "[")
-      table.insert(nTree, parseAssignment(ref.val))
+      table.insert(nTree, parseValue(ref.val))
       table.insert(nTree, "]")
     elseif type == "dotreference" then
       table.insert(nTree, ".")
@@ -109,163 +30,72 @@ function parseTableLookup(ref)
       table.insert(nTree,"(")
       if #ref.val > 0 then
         for _,v in ipairs(ref.val) do
-          table.insert(nTree, parseAssignment(v))
+          table.insert(nTree, parseValue(v))
           table.insert(nTree, ",")
         end
           table.remove(nTree)
       end
       table.insert(nTree,")")
     else
-      return parseAssignment(ref)
+      return parseValue(ref)
     end
     return table.concat(nTree)
 end
 
-function parseFunctionBody(body)
-  local nTree = {}
-  for _,line in ipairs(body) do
-    local type = line.type
-    if type == "return" then
-      table.insert(nTree, "return ")
-      table.insert(nTree, parseAssignment(line.val))
-      table.insert(nTree, "\n")
-    else
-      table.insert(nTree,parseLine(line))
-    end
-  end
-  return table.concat(nTree)
-end
-
-function parseFunctionVars(vars)
-  local nTree = {}
-  table.insert(nTree, "function(")
-    local args = {}
-    for _,v in ipairs(vars) do
-    table.insert(args, v)
-  end
-  table.insert(nTree, table.concat(args,","))
-  table.insert(nTree, ")\n")
-  return table.concat(nTree)
-end
-
-function parseFunction(fcn)
-  local nTree = {}
-  table.insert(nTree, parseFunctionVars(fcn.vars))
-  table.insert(nTree, parseFunctionBody(fcn.val))
-  table.insert(nTree, "end")
-  return table.concat(nTree)
-end
-
-function parseFunctionArgs(args)
-  local nTree = {}
-  table.insert(nTree,"(")
-  for _, arg in ipairs(args.val) do
-    table.insert(nTree,parseAssignment(arg))
-    table.insert(nTree,",")
-  end
-  if #args.val >0 then 
-      table.remove(nTree)
-  end
-  table.insert(nTree,")")
-  return table.concat(nTree)
-end
-
-
-function parseLine(line)
+function parseAssignment(line)
   local nTree = {}
   local type = line.type
-  if type == "assignment" then
-    table.insert(nTree, parseAssignment(line.var))
+  if line.scope == "local" then
+    table.insert(nTree,"local ")
+  end
+    table.insert(nTree, parseValue(line.var))
     table.insert(nTree, "=")
-    table.insert(nTree, parseAssignment(line.val))
-    table.insert(nTree, "\n")
-  elseif type == "declaration" then
-    if line.scope == "local" then
-      table.insert(nTree,"local ")
-    end
-    table.insert(nTree, parseAssignment(line.var))
-    table.insert(nTree, "=")
-    table.insert(nTree, parseAssignment(line.val))
-    table.insert(nTree, "\n")
-  elseif type == "functioncall" then
-    table.insert(nTree, parseAssignment(line))
-    table.insert(nTree, "\n")
-  elseif type == "tablelookup" then
-    table.insert(nTree,parseAssignment(line))
-    table.insert(nTree, "\n")
-  elseif type == "forloop" then
-    parseFor(line)
-  elseif type == "class" then
-    parseClass(line)
-  elseif type == "cclass" then
-    table.insert(nTree, "local ")
-    table.insert(nTree, line.name)
-    table.insert(nTree, "=")
-    table.insert(nTree, line.name)
-    table.insert(nTree, ".new\n")
+  if type == "declaration" or type == "assignment" then
+    table.insert(nTree, parseValue(line.val))
   elseif type == "classinit" then
-    if line.scope == "local" then
-      table.insert(nTree, "local ")
-    end
-    table.insert(nTree, line.var)
-    table.insert(nTree, "=")
     table.insert(nTree, line.class)
     table.insert(nTree, ".new")
     table.insert(nTree,"(")
     for _, arg in ipairs(line.args.val) do
-        table.insert(nTree,parseAssignment(arg))
+        table.insert(nTree,parseValue(arg))
         table.insert(nTree,",")
     end
     if #line.args.val >0 then 
       table.remove(nTree)
     end
     table.insert(nTree,")")
+  else
+    print("ERROR: Invalid declaration type")
+  end
+  table.insert(nTree, "\n")
+  return table.concat(nTree)
+end
+
+function parseLine(line)
+  local nTree = {}
+  local type = line.type
+  if type == "assignment" or type == "declaration" or type == "classinit" then
+    table.insert(nTree, parseAssignment(line))
+  elseif type == "functioncall" then
+    table.insert(nTree, parseValue(line))
     table.insert(nTree, "\n")
-  elseif type == "ifblock" then
-    for _, line in ipairs(line.val) do
-      table.insert(nTree, parseLine(line))
-    end
-      table.insert(nTree, "end\n")
-  elseif type == "if" then
-    table.insert(nTree, "if ")
-    table.insert(nTree, parseAssignment(line.cond))
-    table.insert(nTree, " then\n")
-    table.insert(nTree, parseFunctionBody(line.val))
-  elseif type == "elseif" then
-    table.insert(nTree, "elseif ")
-    table.insert(nTree, parseAssignment(line.cond))
-    table.insert(nTree, " then\n")
-    table.insert(nTree, parseFunctionBody(line.val))
-  elseif type == "else" then
-    table.insert(nTree, "else\n")
-    table.insert(nTree, parseFunctionBody(line.val))
-  elseif type == "switch" then
-    local switchvar = uniquevar()
-    table.insert(nTree, "local ")
-    table.insert(nTree, switchvar)
+  elseif type == "tablelookup" then
+    table.insert(nTree,parseValue(line))
+    table.insert(nTree, "\n")
+  elseif type == "forloop" then
+    table.insert(nTree, parseFor(line))
+  elseif type == "class" then
+    table.insert(nTree, parseClass(line))
+  elseif type == "cclass" then
+    --[[table.insert(nTree, "local ")
+    table.insert(nTree, line.name)
     table.insert(nTree, "=")
-    table.insert(nTree, parseAssignment(line.cond))
-    table.insert(nTree, "\n")
-    table.insert(nTree, "if ")
-    for _, line in ipairs(line.val) do
-      type = line.type 
-      if type == "case" then
-        table.insert(nTree, parseAssignment(line.cond))
-        table.insert(nTree, "==")
-        table.insert(nTree, switchvar)
-        table.insert(nTree, " then\n")
-        table.insert(nTree, parseFunctionBody(line.val))
-        table.insert(nTree, "elseif ")
-      else
-        table.remove(nTree)
-        table.insert(nTree, "else\n")
-        table.insert(nTree, parseFunctionBody(line.val))
-      end
-    end
-    if line.val[#line.val].type ~= "default" then
-      table.remove(nTree)
-    end
-    table.insert(nTree,"end\n")
+    table.insert(nTree, line.name)
+    table.insert(nTree, ".new\n")--]]
+  elseif type == "ifblock" then
+    table.insert(nTree, parseIfBlock(line))
+  elseif type == "switch" then
+    table.insert(nTree, parseSwitch(line))
   elseif type == "comment" then
     --print(line.val)
   else
@@ -292,7 +122,7 @@ end
 
 function run(script,output)
   local p = lex(script)
-  print(inspect(p))
+  --print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

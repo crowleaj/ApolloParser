@@ -32,4 +32,5 @@ function parseFor(loop)
       table.insert(nTree, parseLine(line))
     end
     table.insert(nTree, "end\n")
+    return table.concat(nTree)
 end

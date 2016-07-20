@@ -48,7 +48,7 @@ class Entity {
 		}
 }
 
-var e = Entity("Alice")
+Entity e("Alice")
 print(e->x,e->y)
 e:move(5,6)
 print(e->name)

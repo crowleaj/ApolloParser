@@ -45,7 +45,7 @@ local ldotref = ("." * lvar)/
 local lfuncvars =  
   ("(" * ws * 
   (
-    ((((lvar/function(var) return var.val end) * ws * ","* ws)^0) * (lvar/function(var) return var.val end)) 
+    (((lvar * ws * ","* ws)^0) * lvar) 
     + ws
   ) * ws * 
   ")")/
@@ -181,7 +181,7 @@ lif =
     function(var) var.scope = "global" return var end,
 
   lclassinit = lpeg.V"lglobalclassinit" + ((lvar * ws * lvar * lpeg.V"lfunccallparams" * ws)/
-    function(class, var, params) return {type = "classinit", scope = "local", class = class.val, var = var.val, args = params} end) ,
+    function(class, var, params) return {type = "classinit", scope = "local", class = class.val, var = var, args = params} end) ,
 
   lclassreference = ("->" * lvar)/
     function(val) return {type = "classreference", val = val.val} end,
