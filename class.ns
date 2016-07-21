@@ -1,0 +1,13 @@
+--Basic code to test class mechanism
+
+
+class Entity { 
+    x = 0, y = 0
+}
+
+Entity e("Alice")
+
+print(e->x,e->y)
+--e:move(5,6)
+--print(e->name)
+--print(e->x,e->y)

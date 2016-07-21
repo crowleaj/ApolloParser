@@ -24,10 +24,6 @@ for index,num in nums array {
   print("Testing for loop!")
 }
 
-class Entity { 
-	
-		x = 0, y = 0
-		name
 		
 		Entity(name){
 			this->name = name
@@ -46,13 +42,6 @@ class Entity {
 			io.write(",")
 			print(tostring(y))
 		}
-}
-
-Entity e("Alice")
-print(e->x,e->y)
-e:move(5,6)
-print(e->name)
-print(e->x,e->y)
 
 --Will only work if Object is bound in C/C++
 cclass vec3{

@@ -4,13 +4,15 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function parseAssignment(line)
+function parseAssignment(line, scope)
+  local var = parseValue(line.var)
+  scope[var] = line.class
   local nTree = {}
   local type = line.type
   if line.scope == "local" then
     table.insert(nTree,"local ")
   end
-    table.insert(nTree, parseValue(line.var))
+    table.insert(nTree, var)
     table.insert(nTree, "=")
   if type == "declaration" or type == "assignment" then
     table.insert(nTree, parseValue(line.val))

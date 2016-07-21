@@ -96,7 +96,7 @@ function annotateSingleInstanceVariables(vars, funcvars, inst, ann)
     end
     annotateInstanceVariables(vars, copy, inst.val, ann)
   else
-    print(type)
+    --print(type)
   end
 end
 

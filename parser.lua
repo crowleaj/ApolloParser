@@ -17,16 +17,16 @@ require "classann"
 
 local inspect = require "inspect"
 
-function parseLine(line)
+function parseLine(line, scope)
   local nTree = {}
   local type = line.type
   if type == "assignment" or type == "declaration" or type == "classinit" then
-    table.insert(nTree, parseAssignment(line))
+    table.insert(nTree, parseAssignment(line, scope))
   elseif type == "functioncall" then
-    table.insert(nTree, parseValue(line))
+    table.insert(nTree, parseValue(line, scope))
     table.insert(nTree, "\n")
   elseif type == "tablelookup" then
-    table.insert(nTree,parseValue(line))
+    table.insert(nTree,parseValue(line, scope))
     table.insert(nTree, "\n")
   elseif type == "forloop" then
     table.insert(nTree, parseFor(line))
@@ -53,22 +53,27 @@ end
 
 function parse(tree)
   local nTree = {}
+  local scope = {}
   for _,line in ipairs(tree) do
-    table.insert(nTree,parseLine(line))
+    table.insert(nTree,parseLine(line, scope))
   end
   return table.concat(nTree)
 end 
 
-function runfile(file,output)
-  local f = io.open(file, "rb")
+function loadfile(file)
+  local f = io.open(file .. ".ns", "rb")
   local script = f:read("*all")
   f:close()
-  run(script,output)
+  return script
+end
+
+function runfile(file,output)
+  run(loadfile(file),output)
 end
 
 function run(script,output)
-  local p = lex(script)
-  --print(inspect(p))
+  local p, classes = lex(script)
+  print(inspect(classes))
   p = parse(p)
   if output == true then
       print(p)

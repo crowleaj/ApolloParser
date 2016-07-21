@@ -10,6 +10,7 @@ function parseClass(line)
     assignments = {}
     methods = {}
     constructor = nil
+    local scope = {}
     for _,v in ipairs(line.val) do
         type = v.type
         if type == "variable" then
@@ -31,7 +32,7 @@ function parseClass(line)
     if constructor ~= nil then
         --table.insert(constructor.vars, 1, "self")
         table.insert(nTree, "function")
-        table.insert(nTree, parseValues(constructor.vars))
+        table.insert(nTree, parseValues(constructor.vars, scope))
         table.insert(nTree, "\n")
     else
         table.insert(nTree, "function()\n")
@@ -39,7 +40,7 @@ function parseClass(line)
     table.insert(nTree, "this = {")
     if constructor ~= nil then
         for _,v in ipairs(assignments) do
-        table.insert(nTree, parseLine(v))
+        table.insert(nTree, parseLine(v, scope))
         table.insert(nTree, ",")
         end
         annotateInstanceVariables({vars = classvars, methods = methods}, constructor.vars, constructor.val, "this")

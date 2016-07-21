@@ -7,8 +7,11 @@
 
 require "lpeg"
 
-local ws = ((lpeg.P(" ") + "\r" + "\n" + "\t")^0)
+local includes = {}
+local classes = {}
 
+local ws = ((lpeg.P(" ") + "\r" + "\n" + "\t")^0)
+local sepNoNL = ((lpeg.P(" ") + "\r" + "\t")^1)
 local sep = ((lpeg.P(" ") + "\r" + "\n" + "\t")^1)
 
 local lcomment = ("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws)/
@@ -17,7 +20,7 @@ local lcomment = ("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws)/
 local lnum = (lpeg.P"-"^-1) * (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
   function(num) return {type = "numberconst", val = num} end
 
-local lstring = (("'" * ((lpeg.P(1)-"'")^0) * "'") + ('"' * ((lpeg.P(1)-'"')^0) * '"'))/
+local lstring = (("'" * (((lpeg.P(1)-"'")^0)/function(string) return string end) * "'") + ('"' * (((lpeg.P(1)-'"')^0)/function(string) return string end) * '"'))/
   function(string) return {type = "stringconst", val = string}  end
 
 local lconst = (lnum + lstring)
@@ -89,15 +92,20 @@ local opOverload = lpeg.P(
     end
   )
 
+local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
+  function(type, var) return {type = "typedec", name = type.val, val = var.val} end
+
+local linclude = (lpeg.P"include" * sepNoNL * lstring * ws)/
+  function(include) table.insert(includes, include.val) end
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
 
-  S = (lcomment + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
+  S = (lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
   lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
 
   lassignment = 
-    (((lpeg.V"ltablelookup" + lvar) * ws *
+    (((lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lvar) * ws *
       ("=" * ws * (lpeg.V"lfunc" + lpeg.V"ltable" + lpeg.V"larith")))/
         function(var, val) return {type = "assignment", var = var, val = val} end
       ) *ws,
@@ -164,15 +172,16 @@ lif =
   ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
       function(val) return {type="brackets", val=val} end,
 
-  ltablebody = (lpeg.V"lclassfunction" + lpeg.V"lcclassreference" + lpeg.V"lclassreference" + ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
+  ltablebody = (lpeg.V"lclassfunction" + lpeg.V"lcclassreference" + ldotref + lpeg.V"ltablebrackets" + lpeg.V"lfunccallparams") * (lpeg.V"ltablebody"^-1) ,
 
   ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
       function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
 
   lclass = ("class" * ws * lvar * ws * "{" * ws *
-  (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+  (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+  --(((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ((ws * (lpeg.P"," + "\n") * ws * (lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar))^0))^-1) *
   ws * "}" * ws)/
-    function(name, ...) return {type = "class", name = name.val, val = {...}} end,
+    function(name, ...) classes[name.val] = {...}  return {type = "class", name = name.val} end,
 
   lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
     function(name, vars, ...) return {type = "classmethod", name = name.val, vars = vars, val = {...}} end,
@@ -183,8 +192,8 @@ lif =
   lclassinit = lpeg.V"lglobalclassinit" + ((lvar * ws * lvar * lpeg.V"lfunccallparams" * ws)/
     function(class, var, params) return {type = "classinit", scope = "local", class = class.val, var = var, args = params} end) ,
 
-  lclassreference = ("->" * lvar)/
-    function(val) return {type = "classreference", val = val.val} end,
+  lclassreference = (lvar * "->" * lvar)/
+    function(var, val) return {type = "classreference", var = var.val, val = val.val} end,
 
   lcclassreference = (":>" * lvar)/
     function(val) return {type = "cclassreference", val = val.val} end,  
@@ -202,9 +211,36 @@ lif =
     ((("default" * ws * (lpeg.V"S"^0))/ function(...) return {type = "default", val = {...}} end)^-1) * ws * "}" * ws)/
       function(cond, ...) return {type = "switch", cond = cond, val = {...}} end,
 
-  lrhs = (lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval),
+  lrhs = (lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval),
 }
 
+--http://stackoverflow.com/questions/1410862/concatenation-of-tables-in-lua
+function appendTable(t1,t2)
+  local s1 = #t1
+  for i=1,#t2 do
+      t1[s1+1] = t2[i]
+  end
+end
+
+local function lexdeps(script, parsed)
+  parsed[script] = 1
+  local tree = {lpeg.Ct(ws * (cfg)^0):match(script)}
+  while #includes ~= 0 do
+    local incl = includes
+    includes = {}
+    for _,v in ipairs(incl) do
+      if parsed[v] == nil then
+        print(v)
+        appendTable(tree, lexdeps(loadfile(v), parsed)) 
+      end
+    end
+  end
+  return tree
+end
+
 function lex(script)
-    return lpeg.Ct(ws * (cfg)^0):match(script)
+  local parseTree = lexdeps(script,{})
+  local classtrees = classes
+  classes = {}
+  return parseTree, classtrees
 end

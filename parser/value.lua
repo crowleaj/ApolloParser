@@ -4,41 +4,43 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function parseValues(vars)
+function parseValues(vars, scope)
   local nTree = {}
   table.insert(nTree, "(")
     local args = {}
     for _,v in ipairs(vars) do
-    table.insert(args, parseValue(v))
+    table.insert(args, parseValue(v, scope))
   end
   table.insert(nTree, table.concat(args,","))
   table.insert(nTree, ")")
   return table.concat(nTree)
 end
 
-function parseValue(rhs)
+function parseValue(rhs, scope)
   local type = rhs.type
-  if type == "variable" or type == "classvariable" or type == "numberconst" or type == "stringconst" or type == "operator" then
+  if type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
     return rhs.val
+  elseif type == "stringconst" then
+    return "'" .. rhs.val .. "'"
   elseif type == "function" then
     return parseFunction(rhs)
   elseif type == "parentheses" then
     local nTree = {}
     table.insert(nTree, "(")
-    table.insert(nTree, parseValue(rhs.val))
+    table.insert(nTree, parseValue(rhs.val, scope))
     table.insert(nTree, ")")
     return table.concat(nTree)
   elseif type == "arithmetic" then
     local nTree = {}
     for _,op in ipairs(rhs.val) do
-      table.insert(nTree, parseValue(op))
+      table.insert(nTree, parseValue(op, scope))
     end
     return table.concat(nTree)
   elseif type == "table" then
     local nTree = {}
     table.insert(nTree,"{")
     for _,arg in ipairs(rhs.val) do
-         table.insert(nTree,parseValue(arg))
+         table.insert(nTree,parseValue(arg, scope))
          table.insert(nTree,",")
     end
     if #rhs.val > 0 then
@@ -55,11 +57,11 @@ function parseValue(rhs)
     return table.concat(nTree)
   elseif type == "functioncall" then
     local nTree = {}
-    table.insert(nTree, parseValue(rhs.name))
+    table.insert(nTree, parseValue(rhs.name, scope))
     for _, val in ipairs(rhs.args) do
       table.insert(nTree,"(")
       for _, arg in ipairs(val.val) do
-        table.insert(nTree,parseValue(arg))
+        table.insert(nTree,parseValue(arg, scope))
         table.insert(nTree,",")
       end
       if #val.val >0 then 
@@ -69,6 +71,7 @@ function parseValue(rhs)
     end
     return table.concat(nTree)
   elseif type == "classreference" then
+    print("TYPE: " .. scope[rhs.var])
     local nTree = {}
     --table.insert(nTree, rhs.var)
     table.insert(nTree, ".")
