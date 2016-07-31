@@ -92,11 +92,18 @@ local opOverload = lpeg.P(
     end
   )
 
-local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
-  function(type, var) return {type = "typedec", name = type.val, val = var.val} end
-
 local linclude = (lpeg.P"include" * sepNoNL * lstring * ws)/
   function(include) table.insert(includes, include.val) end
+
+local lparent = lvarnorm/function(var) return {type = "parent", val = var.val} end
+
+local lprimclassassignment = (lvarnorm * sepNoNL * ((lvarnorm * sepNoNL)^-1) * "=" * sepNoNL * (lstring + lnum) * ws)/
+  function(var, prim, val) if val ~= nil then return {type = "const", ctype = prim.val, val = val.val}
+  else return {type = "const", ctype = prim.type, val = prim} end end
+
+local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
+  function(var, type) return {type = "typedec", ctype = type.val, var = var.val} end
+
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
@@ -177,11 +184,14 @@ lif =
   ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
       function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
 
-  lclass = ("class" * ws * lvar * ws * "{" * ws *
-  (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+  lclassassignment = (lvarnorm * sepNoNL * lvarnorm * lpeg.V"lfunccallparams" * ws)/
+    function(var, type, params) return {type = "classinit", ctype = type.val, var = var.val, val = params} end,
+
+  lclass = ("class" * ws * lvar * ws * ((":" * ws *(((lparent * ws * ","* ws)^0) * lparent))^-1) * ws * "{" * ws *
+  (((lpeg.V"lclassassignment" + lpeg.V"lclassmethod" + lprimclassassignment + ltypedec) * ws * (lpeg.P","^-1) * ws)^0) *
   --(((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ((ws * (lpeg.P"," + "\n") * ws * (lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar))^0))^-1) *
   ws * "}" * ws)/
-    function(name, ...) classes[name.val] = {...}  return {type = "class", name = name.val} end,
+    function(name, ...) classes[name.val] = {{type = "class"}, ...}  return {type = "class", name = name.val} end,
 
   lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
     function(name, vars, ...) return {type = "classmethod", name = name.val, vars = vars, val = {...}} end,
@@ -201,10 +211,10 @@ lif =
   lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
     function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
 
-  lcclass = ("cclass" * ws * lvar * ws * "{" * ws *
-    (((lpeg.V"lfunccall" + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+  lcclass = ("cclass" * ws * lvar * ws * ((":" * ws * (((lparent * ws * ","* ws)^0) * lparent))^-1) * ws * "{" * ws *
+    (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
     ws * "}" * ws)/
-      function(name, ...) return {type = "cclass", name = name.val, val = {...}} end,
+      function(name, ...) classes[name.val] = {{type = "cclass"}, ...} return {type = "cclass", name = name.val} end,
 
   lswitch = ("switch(" * ws * lpeg.V"larith" * ws * ")" * ws * "{" *
     ws * ((("case" * ws * lpeg.V"larith" * ws * (lpeg.V"S"^0))/function(case, ...) return {type = "case", cond = case, val = {...}} end)^0) * 

@@ -13,6 +13,8 @@ require "parser/ifblock"
 require "parser/for"
 require "parser/switch"
 require "parser/class"
+
+require "parser/classpreparse"
 require "classann"
 
 local inspect = require "inspect"
@@ -73,7 +75,8 @@ end
 
 function run(script,output)
   local p, classes = lex(script)
-  print(inspect(classes))
+  preparseClasses(classes)
+  --print(inspect(classes))
   p = parse(p)
   if output == true then
       print(p)

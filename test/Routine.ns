@@ -1,5 +1,12 @@
-class Routine {
+class Routine : Foo, Bar {
     
+    e Entity()
+    liveTime int = 0
+
+    setEntity(e){
+        this->e = e
+    }
+
     update(entity){
 
     }
