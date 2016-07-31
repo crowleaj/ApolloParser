@@ -25,7 +25,7 @@ local lstring = (("'" * (((lpeg.P(1)-"'")^0)/function(string) return string end)
 
 local lconst = (lnum + lstring)
 
-local lkeywords = (lpeg.P"this" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar") * sep
+local lkeywords = (lpeg.P"this" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar" + "func" + "gfunc") * sep
 
 local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))-lkeywords)/
   function(var) return {type = "variable", val = var} end
@@ -38,6 +38,14 @@ local lvar = lvarclass + lvarnorm
 local lval = lconst + lvar
 
 local lnumval = lnum + lvar
+
+local llocal = lvarnorm/function(val) return {type = "local", ctype = val.val} end
+
+local lpointer = ("*" * ws * lvarnorm)/function(val) return {type = "pointer", ctype = val.val} end 
+
+local lmanaged = (lpointer * ws * lpeg.C(lpeg.P"owner" + "shared" + "weak"))/function(val, type) return {type = type, val = val.ctype} end
+
+local lvartype = lmanaged + lpointer + llocal
 
 local llocal = ("var" * ws)/"local"
 local lglobal = ("gvar" * ws)/"global"
@@ -108,8 +116,17 @@ local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
 local cfg = lpeg.P{
   "S",
 
-  S = (lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
+  S = (lpeg.V"ltype" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
   lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
+ 
+  lfuncptrargs = lpeg.Ct("(" * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/function(val) return val or {} end,
+  
+  lfuncptr = ("func" * lpeg.V"lfuncptrargs" * ((ws * (lpeg.Ct(lpeg.V"ltype") + (lpeg.V"lfuncptrargs")))^-1))/
+    function(args, returns)
+      return {type = "function", args = args, returns = returns or {}}
+    end,
+
+  ltype = lpeg.V"lfuncptr" + lvartype,
 
   lassignment = 
     (((lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lvar) * ws *
@@ -123,6 +140,9 @@ local cfg = lpeg.P{
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
   
+
+  lfuncvars = "(" * lvarnorm * ")",
+
   lfunc = 
     (lfuncvars  * ws * 
     "{" * ws *  
