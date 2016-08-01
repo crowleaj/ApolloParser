@@ -116,17 +116,30 @@ local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
 local cfg = lpeg.P{
   "S",
 
-  S = (lpeg.V"ltype" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
+  S = (lpeg.V"lfunc" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
   lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
  
-  lfuncptrargs = lpeg.Ct("(" * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/function(val) return val or {} end,
+  lfuncptrparams = lpeg.Ct("(" * ws * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/
+    function(returns) return returns or {} end,
   
-  lfuncptr = ("func" * lpeg.V"lfuncptrargs" * ((ws * (lpeg.Ct(lpeg.V"ltype") + (lpeg.V"lfuncptrargs")))^-1))/
-    function(args, returns)
-      return {type = "function", args = args, returns = returns or {}}
-    end,
+  lfuncreturns = (((lpeg.Ct(lpeg.V"ltype") + (lpeg.V"lfuncptrparams")))^-1)/
+    function(returns) return returns or {} end,
 
+  lfuncptr = ("func" * lpeg.V"lfuncptrparams" * ws * lpeg.V"lfuncreturns")/
+    function(params, returns)
+      return {type = "function", params = args, returns = returns or {}}
+    end,
+  
   ltype = lpeg.V"lfuncptr" + lvartype,
+
+  lfuncparam = (lvarnorm * ws * lpeg.V"ltype")/
+    function(var, type) return {name = var.val, ctype = type.ctype, type = type.type} end,
+
+  lfuncparams = lpeg.Ct("(" * ((ws * lpeg.V"lfuncparam" * ws * (("," * ws * lpeg.V"lfuncparam")^0))^-1) * ws * ")" )/
+    function(params) return params or {} end,
+
+  lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns")/
+    function(scope, name, params, returns) return {type = "function", scope = scope, name = name.val, params = params, returns = returns} end,
 
   lassignment = 
     (((lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lvar) * ws *
@@ -142,13 +155,13 @@ local cfg = lpeg.P{
   
 
   lfuncvars = "(" * lvarnorm * ")",
-
+--[[
   lfunc = 
     (lfuncvars  * ws * 
     "{" * ws *  
     ((lpeg.V"S" * ws)^0) * 
     (lpeg.V"lreturnstatement"^-1) * ws *
-    lpeg.P"}" * ws)/ function(vars, ...) return {type="function", vars = vars, val = {...}}   end,
+    lpeg.P"}" * ws)/ function(vars, ...) return {type="function", vars = vars, val = {...}}   end,]]
   
   lfunccallparams = 
     ("(" * ws * 

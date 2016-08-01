@@ -1,5 +1,5 @@
 --include "test/Routine"
-func(int) (int, func(*double))
-func foo(var int) int {
-    return var
+--func(int) (int, func(*double))
+func foo(a int) int {
+    return a
 }
