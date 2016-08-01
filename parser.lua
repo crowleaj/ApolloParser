@@ -47,8 +47,8 @@ function parseLine(line, scope)
   elseif type == "comment" then
     --print(line.val)
   else
-    print(type)
-    --print("unrecognized instruction: " .. inspect(line))
+    --print(type)
+    print("unrecognized instruction: " .. inspect(line))
   end
   return table.concat(nTree)
 end
@@ -56,8 +56,10 @@ end
 function parse(tree)
   local nTree = {}
   local scope = {}
-  for _,line in ipairs(tree) do
-    table.insert(nTree,parseLine(line, scope))
+  for _,file in ipairs(tree) do
+    for _,line in ipairs(file) do
+      table.insert(nTree,parseLine(line, scope))
+    end
   end
   return table.concat(nTree)
 end 
@@ -77,6 +79,7 @@ function run(script,output)
   local p, classes = lex(script)
   preparseClasses(classes)
   --print(inspect(classes))
+  print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)
