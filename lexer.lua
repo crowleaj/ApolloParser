@@ -147,7 +147,7 @@ local cfg = lpeg.P{
         function(var, val) return {type = "assignment", var = var, val = val} end
       ) *ws,
 
-  ldecl = ((llocal + lglobal) * ws * (lpeg.V"lassignment" + (lvarnorm * ws)))/
+  ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * (lpeg.V"ltype" - llocal) + (llocal * lfuncreturns) )/
     function(scope, assignment) assignment.type = "declaration" assignment.scope = scope return assignment end,
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
