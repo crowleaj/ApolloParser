@@ -1,5 +1,8 @@
 --include "test/Routine"
 --func(int) (int, func(*double))
-func foo(a int) int {
-    return a
-}
+
+var x int 5
+print(x)
+--func foo(a int) int {
+--    return a
+--}

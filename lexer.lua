@@ -39,13 +39,13 @@ local lval = lconst + lvar
 
 local lnumval = lnum + lvar
 
-local llocal = lvarnorm/function(val) return {type = "local", ctype = val.val} end
+local llocalvar = lvarnorm/function(val) return {type = "local", ctype = val.val} end
 
 local lpointer = ("*" * ws * lvarnorm)/function(val) return {type = "pointer", ctype = val.val} end 
 
 local lmanaged = (lpointer * ws * lpeg.C(lpeg.P"owner" + "shared" + "weak"))/function(val, type) return {type = type, val = val.ctype} end
 
-local lvartype = lmanaged + lpointer + llocal
+local lvartype = lmanaged + lpointer + llocalvar
 
 local llocal = ("var" * ws)/"local"
 local lglobal = ("gvar" * ws)/"global"
@@ -147,8 +147,11 @@ local cfg = lpeg.P{
         function(var, val) return {type = "assignment", var = var, val = val} end
       ) *ws,
 
-  ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * (lpeg.V"ltype" - llocal) + (llocal * lfuncreturns) )/
-    function(scope, assignment) assignment.type = "declaration" assignment.scope = scope return assignment end,
+  ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
+    function(returns) return returns or {} end,
+
+  ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * lvarnorm * ((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1) * ws)/
+    function(scope, var, ctype, args) return {scope = scope, var = var.val, ctype = ctype, args = args or {}} end,
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
