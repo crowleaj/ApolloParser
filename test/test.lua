@@ -1,6 +1,6 @@
 require "parser"
 
-runfile("include",true)
+runfile("test/include",true)
 --runfile("../scripts/controller.ns",false)
 
 --print(m.x)

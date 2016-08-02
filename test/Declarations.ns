@@ -1,0 +1,26 @@
+--Created by Alex Crowley
+--On August 2, 2016
+--Copyright (c) 2016, TBD
+--Licensed under the MIT license
+--See LICENSE file for terms
+
+--Syntax specification for declarations
+
+--everywhere is visible to any file, "global", gvar cannot be declared in a function
+gvar everywhere bool = 0
+
+func main() int {
+    --Four ways to declare an object
+
+    --Equals syntax to constant
+    var a char = 1
+    --Class declaration syntax
+    var b short(2)
+    --Use of reference value, works as assignment for Objects
+    var c int = b
+    --Uninitialized variable
+    var d long
+
+    --Other types are float and float64
+    return 0
+}

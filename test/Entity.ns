@@ -1,0 +1,13 @@
+--Created by Alex Crowley
+--On August 2, 2016
+--Copyright (c) 2016, TBD
+--Licensed under the MIT license
+--See LICENSE file for terms
+
+class Entity {
+
+    x, y float64
+
+    Entity(x, y){
+    }
+}
