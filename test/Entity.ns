@@ -1,13 +1,36 @@
 --Created by Alex Crowley
---On August 2, 2016
+--On August 4, 2016
 --Copyright (c) 2016, TBD
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-class Entity {
+--Basic code to test class mechanism
 
-    x, y float64
 
-    Entity(x, y){
+class Entity { 
+    x, y float64 = 0, 0
+
+    routine Routine
+    name string
+    Entity(name string, x, y float64){
+        this->name = name
+        move(x, y)
     }
+
+    move(x float64, y float64){
+        this->x = x
+        this->y = y
+    }
+
+    update(dt float64){
+        if routine != null {
+            routine->update(dt)
+        }
+    }
+}
+
+func main(){
+    Entity e("Alice")
+    e:move(5,6)
+    print(e->name)
 }

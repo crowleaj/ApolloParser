@@ -10,9 +10,14 @@ func main(){
     --Acts like HashMap in Java
     --indexes 1, foo, 2, 3, 4, 5 used
     var a []int = [1, foo = 2, 3, 4, 5]
-    var ents []Entity = [Entity(0,0),Entity(1,1),Entity(2,2)]
+    var ents []Entity = [Entity("a", 0, 0),Entity("b", 1, 1),Entity("c", 2, 2)]
 
     
     var b int = a["foo"]
+
+    --Map of map of int
+    var c [][]int = [foo = [1, 2]. bar = [3, e = 5]]
+
+    var d int = c["bar"]["e"]
 
 }

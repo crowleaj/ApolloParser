@@ -1,13 +1,13 @@
-class Routine : Foo, Bar {
+trait Routine {
     
-    e Entity()
-    liveTime int = 0
+    e Entity
 
-    setEntity(e){
+    bind(e Entity){
         this->e = e
+        e->routine = this
     }
 
-    update(entity){
+    update(dt int){
 
     }
 }

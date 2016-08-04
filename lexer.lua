@@ -45,7 +45,11 @@ local lpointer = ("*" * ws * lvarnorm)/function(val) return {type = "pointer", c
 
 local lmanaged = (lpointer * ws * lpeg.C(lpeg.P"owner" + "shared" + "weak"))/function(val, type) return {type = type, val = val.ctype} end
 
-local lvartype = lmanaged + lpointer + llocalvar
+local larray = ("()" * lvarnorm)/function(val) return {type = "array", ctype = val.val} end
+
+local lmap = ("[]" * lvarnorm)/function(val) return {type = "map", ctype = val.val} end
+
+local lvartype = lmap + larray + llocalvar
 
 local llocal = ("var" * ws)/"local"
 local lglobal = ("gvar" * ws)/"global"
@@ -117,7 +121,7 @@ local cfg = lpeg.P{
   "S",
 
   S = (lpeg.V"lfunc" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
-  lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"ldecl" + lpeg.V"lforloop")^1, 
+  lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"lvariable" + lpeg.V"lforloop")^1, 
  
   lfuncptrparams = lpeg.Ct("(" * ws * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/
     function(returns) return returns or {} end,
@@ -133,25 +137,50 @@ local cfg = lpeg.P{
   ltype = lpeg.V"lfuncptr" + lvartype,
 
   lfuncparam = (lvarnorm * ws * lpeg.V"ltype")/
-    function(var, type) return {name = var.val, ctype = type.ctype, type = type.type} end,
+    function(var, type) return {name = var.val, ctype = type.ctype} end,
+  
+  lquicktypes = lpeg.Ct(lvarnorm * ws * (("," * ws * lvarnorm * ws)^1) * lvarnorm * ws)/
+    function(types) local type = types[#types].val types[#types] = nil
+      local t = {type = "quicktypes"}
+      for _,v in ipairs(types) do 
+        v.type = type
+        table.insert(t, {name = v.val, type = type})
+      end
+      return t 
+    end,
 
-  lfuncparams = lpeg.Ct("(" * ((ws * lpeg.V"lfuncparam" * ws * (("," * ws * lpeg.V"lfuncparam")^0))^-1) * ws * ")" )/
-    function(params) return params or {} end,
+  lfuncparams = lpeg.Ct("(" * ((ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam") * ws * (("," * ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam"))^0))^-1) * ws * ")" )/
+    function(params) params = params or {} 
+      local t = {}
+      for _, v in ipairs(params) do
+        if v.type == "quicktypes" then
+          appendTable(t, v)
+        else
+          table.insert(t, v)
+        end
+      end
+      return t
+    end,
 
   lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns")/
     function(scope, name, params, returns) return {type = "function", scope = scope, name = name.val, params = params, returns = returns} end,
 
-  lassignment = 
+ --[[ lassignment = 
     (((lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lvar) * ws *
       ("=" * ws * (lpeg.V"lfunc" + lpeg.V"ltable" + lpeg.V"larith")))/
         function(var, val) return {type = "assignment", var = var, val = val} end
       ) *ws,
+    ]]
+  lassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
+    function(declaration, assignment) declaration.type = "assignment" declaration.val = assignment return declaration  end,
 
   ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
-    function(returns) return returns or {} end,
+    function(returns) returns = returns or {} returns.type = "params" return returns end,
+--((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1)
+  ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * lvarnorm)/
+    function(scope, var, ctype) return {type = "declaration", scope = scope, var = var.val, ctype = ctype} end,
 
-  ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * lvarnorm * ((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1) * ws)/
-    function(scope, var, ctype, args) return {scope = scope, var = var.val, ctype = ctype, args = args or {}} end,
+lvariable = (lpeg.V"lassignment" + (lpeg.V"ldecl" * ws)),
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
@@ -259,12 +288,13 @@ lif =
 
   lrhs = (lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval),
 }
-
+local inspect = require"inspect"
 --http://stackoverflow.com/questions/1410862/concatenation-of-tables-in-lua
 function appendTable(t1,t2)
   local s1 = #t1
+  print(#t1)
   for i=1,#t2 do
-      t1[s1+1] = t2[i]
+      t1[s1+i] = t2[i]
   end
 end
 

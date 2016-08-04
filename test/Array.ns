@@ -13,9 +13,13 @@ func main(){
     --Can defer initialization, adhering to Declaration rules
     a = (1, 2, 3, 4, 5)
 
-    var ents ()Entity = (Entity(0,0),Entity(1,1),Entity(2,2))
+    var ents ()Entity = (Entity("a", 1, 1),Entity("a", 2, 2),Entity("a", 3, 3))
 
+    --Arrays are 1 indexed due to Lua
+    var b int = a[1]
 
-    var b int a[0]
+    --Arry of array of int
+    var c ()()int = ((1, 2), (3, 4))
 
+    var d int = c[1][1]
 }
