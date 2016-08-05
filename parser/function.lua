@@ -6,12 +6,35 @@
 
 function parseFunction(fcn)
   local nTree = {}
-  table.insert(nTree, "function")
-  table.insert(nTree, parseValues(fcn.vars))
+  if fcn.scope == "local" then
+    table.insert(nTree, "local ")
+  end
+  table.insert(nTree, "function ")
+  table.insert(nTree, fcn.name)
+  table.insert(nTree, parseFunctionValues(fcn.params))
   table.insert(nTree, "\n")
-  table.insert(nTree, parseFunctionBody(fcn.val))
-  table.insert(nTree, "end")
+  table.insert(nTree, parseFunctionBody(fcn.body))
+  table.insert(nTree, "end\n")
   return table.concat(nTree)
+end
+
+function parseFunctionValues(vals)
+  local nTree = {"("}
+  local args = {}
+  for _, val in ipairs(vals) do
+    table.insert(args, val.name)
+  end
+  table.insert(nTree,table.concat(args, ","))
+  table.insert(nTree, ")")
+  return table.concat(nTree)
+end
+
+function parseSignature(fcn)
+  local params = {}
+  for _,v in ipairs(fcn.params) do
+    table.insert(params, v.ctype)
+  end
+  return {params = parms, returns = params.returns}
 end
 
 function parseFunctionBody(body)

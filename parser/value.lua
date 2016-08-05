@@ -16,6 +16,23 @@ function parseValues(vars, scope)
   return table.concat(nTree)
 end
 
+--TODO: check type
+function parseDeclaration(val)
+  local nTree = {}
+  if val.scope == "local" then
+    table.insert(nTree, "local")
+  end
+  table.insert(nTree, val.name)
+  if val.type == "declassignment" then
+    table.insert(nTree, "=")
+    local type = val.ctype.val
+    if type == "number" or type == "char" or type == "short" or type == "int" or type == "long" or type == "float" or type == "float64" then
+      table.insert(nTree, parseValue(val.val))
+    end
+  end
+  table.insert(nTree, "\n")
+  return table.concat(nTree, " ")
+end
 function parseValue(rhs, scope)
   local type = rhs.type
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then

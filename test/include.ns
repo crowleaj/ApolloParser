@@ -1,8 +1,14 @@
 --include "test/Routine"
 --func(int) (int, func(*double))
 
-var x int = 1
 --var y func(int,int) int = 6
 func foo(a, b int, c float) int {
     return a
+}
+
+func main(){
+    var x int = 1
+    if x < 5 || x > 7 {
+        print(x)
+    }
 }

@@ -40,9 +40,14 @@ function parseLine(line, scope)
     table.insert(nTree, "=")
     table.insert(nTree, line.name)
     table.insert(nTree, ".new\n")--]]
+  elseif type == "function" then
+    table.insert(nTree, parseFunction(line))
+  elseif type == "declassignment" then
+    table.insert(nTree, parseDeclaration(line))
   elseif type == "ifblock" then
     table.insert(nTree, parseIfBlock(line))
   elseif type == "switch" then
+
     table.insert(nTree, parseSwitch(line))
   elseif type == "comment" then
     --print(line.val)
@@ -61,6 +66,7 @@ function parse(tree)
       table.insert(nTree,parseLine(line, scope))
     end
   end
+  table.insert(nTree, "main()")
   return table.concat(nTree)
 end 
 

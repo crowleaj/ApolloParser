@@ -120,14 +120,13 @@ local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
 local cfg = lpeg.P{
   "S",
 
-  S = (lpeg.V"lfunc" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"lassignment" + 
+  S = (lpeg.V"lfunc" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"ldeclassignment" + 
   lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"lvariable" + lpeg.V"lforloop")^1, 
  
   lfuncptrparams = lpeg.Ct("(" * ws * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/
     function(returns) return returns or {} end,
   
-  lfuncreturns = (((lpeg.Ct(lpeg.V"ltype") + (lpeg.V"lfuncptrparams")))^-1)/
-    function(returns) return returns or {} end,
+  lfuncreturns = (((lpeg.Ct(lpeg.V"ltype") + (lpeg.V"lfuncptrparams")))^-1),
 
   lfuncptr = ("func" * lpeg.V"lfuncptrparams" * ws * lpeg.V"lfuncreturns")/
     function(params, returns)
@@ -162,8 +161,13 @@ local cfg = lpeg.P{
       return t
     end,
 
-  lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns")/
-    function(scope, name, params, returns) return {type = "function", scope = scope, name = name.val, params = params, returns = returns} end,
+  lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns" * ws * lpeg.V"lbody")/
+    function(scope, name, params, returns, body) 
+      if body == nil then
+        body = returns
+        returns = {}
+      end
+    return {type = "function", scope = scope, name = name.val, params = params, returns = returns, body = body} end,
 
  --[[ lassignment = 
     (((lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lvar) * ws *
@@ -171,29 +175,23 @@ local cfg = lpeg.P{
         function(var, val) return {type = "assignment", var = var, val = val} end
       ) *ws,
     ]]
-  lassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
-    function(declaration, assignment) declaration.type = "assignment" declaration.val = assignment return declaration  end,
+
+  ldeclassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
+    function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
 
   ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
     function(returns) returns = returns or {} returns.type = "params" return returns end,
 --((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1)
   ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * lvarnorm)/
-    function(scope, var, ctype) return {type = "declaration", scope = scope, var = var.val, ctype = ctype} end,
+    function(scope, var, ctype) return {type = "declaration", scope = scope, name = var.val, ctype = ctype} end,
 
-lvariable = (lpeg.V"lassignment" + (lpeg.V"ldecl" * ws)),
+  lvariable = (lpeg.V"ldeclassignment" + (lpeg.V"ldecl" * ws)),
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
   
 
   lfuncvars = "(" * lvarnorm * ")",
---[[
-  lfunc = 
-    (lfuncvars  * ws * 
-    "{" * ws *  
-    ((lpeg.V"S" * ws)^0) * 
-    (lpeg.V"lreturnstatement"^-1) * ws *
-    lpeg.P"}" * ws)/ function(vars, ...) return {type="function", vars = vars, val = {...}}   end,]]
   
   lfunccallparams = 
     ("(" * ws * 
@@ -230,15 +228,16 @@ lvariable = (lpeg.V"lassignment" + (lpeg.V"ldecl" * ws)),
 lforloop = ((lforen + lfornorm) * ws * lpeg.V"lbody" * ws)/
   function(iter,body) return {type="forloop", iter = iter, val = {body}} end,
   
-lbody = (
+lbody = lpeg.Ct(
   "{" * ws *  
   ((lpeg.V"S" * ws)^0) * ws * 
+  (lpeg.V"lreturnstatement"^-1) *
   lpeg.P"}" * ws),
   
 lif = 
-  ((("if" * ws * lpeg.V"larith" * ws * lpeg.V"lbody")/ function(condition, ...) return {type = "if", cond = condition, val = {...}} end) *
-  (((lpeg.P"or" * ws * lpeg.V"larith" * ws * lpeg.V"lbody")/ function(condition, ...) return {type = "elseif", cond = condition, val = {...}} end)^0) *
-  (((lpeg.P"else" * ws * lpeg.V"lbody")/ function(...) return {type = "else", val ={...}} end)^-1))/
+  ((("if" * ws * lpeg.V"larith" * ws * lpeg.V"lbody")/ function(condition, body) return {type = "if", cond = condition, body = body} end) *
+  (((lpeg.P"or" * ws * lpeg.V"larith" * ws * lpeg.V"lbody")/ function(condition, body) return {type = "elseif", cond = condition, body = body} end)^0) *
+  (((lpeg.P"else" * ws * lpeg.V"lbody")/ function(body) return {type = "else", body = body} end)^-1))/
     function(...) return {type = "ifblock", val = {...}} end,
   
   ltablebrackets = ("[" * (lpeg.V"lfunccall" + lpeg.V"ltablelookup" + lval) * "]")/
@@ -277,7 +276,7 @@ lif =
     function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
 
   lcclass = ("cclass" * ws * lvar * ws * ((":" * ws * (((lparent * ws * ","* ws)^0) * lparent))^-1) * ws * "{" * ws *
-    (((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
+    (((lpeg.V"ldeclassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
     ws * "}" * ws)/
       function(name, ...) classes[name.val] = {{type = "cclass"}, ...} return {type = "cclass", name = name.val} end,
 

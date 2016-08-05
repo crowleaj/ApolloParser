@@ -20,15 +20,15 @@ function parseCondition(line)
         table.insert(nTree, "if ")
         table.insert(nTree, parseValue(line.cond))
         table.insert(nTree, " then\n")
-        table.insert(nTree, parseFunctionBody(line.val))
+        table.insert(nTree, parseFunctionBody(line.body))
     elseif type == "elseif" then
         table.insert(nTree, "elseif ")
         table.insert(nTree, parseValue(line.cond))
         table.insert(nTree, " then\n")
-        table.insert(nTree, parseFunctionBody(line.val))
+        table.insert(nTree, parseFunctionBody(line.body))
     elseif type == "else" then
         table.insert(nTree, "else\n")
-        table.insert(nTree, parseFunctionBody(line.val))
+        table.insert(nTree, parseFunctionBody(line.body))
     else
         print "ERROR: Unexpected statement in if block"
     end
