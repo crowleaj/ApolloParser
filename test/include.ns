@@ -1,7 +1,22 @@
 --include "test/Routine"
 --func(int) (int, func(*double))
-
+trait TempChange of Liquid
 --var y func(int,int) int = 6
+class Liquid with TempChange
+
+trait TempChange of Liquid
+
+trait Boil of HotDrink with TempChange
+
+trait Freeze of ColdDrink with TempChange
+
+--HotDrink now has trait Boil which overrides TempChange method adjust
+class HotDrink of Liquid with Boil
+
+--Body of class may be dropped if unnecessary
+--class ColdDrink of Liquid with Freeze
+
+
 func foo(a, b int, c float) int {
     return a
 }

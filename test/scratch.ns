@@ -1,0 +1,30 @@
+class Liquid with TempChange {
+    temperature float64
+
+    prepare(){
+        adjust()
+    }
+}
+
+trait TempChange of Liquid {
+    adjust(){
+
+    }
+}
+
+trait Boil of HotDrink with TempChange {
+    adjust(){
+        temperature = 212
+    }
+}
+
+trait Freeze of ColdDrink with TempChange {
+    adjust(){
+        temperature = 32
+    }
+}
+
+--HotDrink now has trait Boil which overrides TempChange method adjust
+class HotDrink of Liquid with Boil {
+
+}

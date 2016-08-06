@@ -58,14 +58,123 @@ function parseLine(line, scope)
   return table.concat(nTree)
 end
 
+--Each file will have functions, variables and body, last file will have main
+
+--[[
+    First pass of data
+    Organizes data into the following categories/scopes:
+      global: 
+        traits, classes, gfunc, gvar
+      file:
+        func, var
+     Also captures the main function of the file requested to parse
+
+     Returns:
+      global, files (list of file scopes), main
+--]]
+function preParse(tree)
+
+  local global = {traits = {}, classes = {}, functions = {}, variables = {}}
+  local files = {}
+  local main = nil
+
+  for num,f in ipairs(tree) do
+    local file = {functions = {}, variables = {}}
+    for _,line in ipairs(f) do
+      local type = line.type
+      if type == "declassignment" or type == "declaration" then
+        if line.scope == "global" then
+          table.insert(global.variables, line)
+        else
+          table.insert(file.variables, line)
+        end
+      elseif type == "function" then
+        if line.name == "main" then
+          if num == #tree then
+            main = line
+          end
+        elseif line.scope == "global" then
+          table.insert(global.functions, line)
+        else
+          table.insert(file.functions, line)
+        end
+      elseif type == "trait" then
+        global.traits[line.name] = line
+      elseif type == "class" or type == "cclass" then
+        table.insert(global.classes, line)
+      end
+    end
+    table.insert(files, file)
+  end
+
+  return global, files, main
+end
+
+function linearizeTraits(traits)
+  local toplevel = {}
+  for name, trait in pairs(traits) do  
+      if #trait.traits == 0 then
+        table.insert(toplevel, trait)
+      else
+        for _, t in pairs(trait.traits) do
+          t = traits[t]
+          table.insert(t.children, name)
+        end
+      end
+  end
+  return toplevel
+end
+
+function preParseTraits(traits)
+  local toplevel = {}
+  for _, trait in pairs(traits) do
+    trait.traits = {}
+    for _, arg in ipairs(trait.val) do
+      local type = arg.type
+      if type == "class" then
+        trait.class = arg.val
+      elseif type == "trait" then
+        table.insert(trait.traits, arg.val)
+      else
+        trait.body = arg
+      end
+    end
+    trait.val = nil
+    trait.type = nil
+  end
+end
+
+function preParseClasses(classes)
+  for _, class in pairs(classes) do
+    class.traits = {}
+    for _, arg in ipairs(class.val) do
+      local type = arg.type
+      if type == "class" then
+        class.parent = arg.val
+      elseif type == "trait" then
+        table.insert(class.traits, arg.val)
+      else
+        class.body = arg
+      end
+    end
+    class.val = nil
+    class.type = nil
+  end
+end
+
 function parse(tree)
+  local global, files, main = preParse(tree)
+  preParseTraits(global.traits)
+  preParseClasses(global.classes)
+  print(inspect(global))
   local nTree = {}
   local scope = {}
-  for _,file in ipairs(tree) do
+  for _,file in ipairs(files) do
     for _,line in ipairs(file) do
       table.insert(nTree,parseLine(line, scope))
     end
   end
+  table.insert(nTree, parseFunction(main))
   table.insert(nTree, "main()")
   return table.concat(nTree)
 end 
@@ -85,7 +194,7 @@ function run(script,output)
   local p, classes = lex(script)
   preparseClasses(classes)
   --print(inspect(classes))
-  print(inspect(p))
+  --print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

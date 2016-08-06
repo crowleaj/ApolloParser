@@ -25,7 +25,7 @@ local lstring = (("'" * (((lpeg.P(1)-"'")^0)/function(string) return string end)
 
 local lconst = (lnum + lstring)
 
-local lkeywords = (lpeg.P"this" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar" + "func" + "gfunc") * sep
+local lkeywords = (lpeg.P"this" + "trait" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar" + "func" + "gfunc") * sep
 
 local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09"))^0))-lkeywords)/
   function(var) return {type = "variable", val = var} end
@@ -116,12 +116,14 @@ local lprimclassassignment = (lvarnorm * sepNoNL * ((lvarnorm * sepNoNL)^-1) * "
 local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
   function(var, type) return {type = "typedec", ctype = type.val, var = var.val} end
 
+local lclasstype = lvarnorm/function(var) var.type = "class" return var end
+local ltraittype = lvarnorm/function(var) var.type = "trait" return var end
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
 
-  S = (lpeg.V"lfunc" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"ldeclassignment" + 
-  lpeg.V"ltablelookup" + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"lvariable" + lpeg.V"lforloop")^1, 
+  S = (lpeg.V"lfunc" + lpeg.V"ltrait" + lcomment + linclude + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"lclassinit" + (lpeg.V"lfunccall" * ws) + lpeg.V"ldeclassignment" + 
+  lpeg.V"ltablelookup"  + lpeg.V"lcclass" + lpeg.V"lclass" + lpeg.V"lvariable" + lpeg.V"lforloop")^1, 
  
   lfuncptrparams = lpeg.Ct("(" * ws * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/
     function(returns) return returns or {} end,
@@ -168,13 +170,6 @@ local cfg = lpeg.P{
         returns = {}
       end
     return {type = "function", scope = scope, name = name.val, params = params, returns = returns, body = body} end,
-
- --[[ lassignment = 
-    (((lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lvar) * ws *
-      ("=" * ws * (lpeg.V"lfunc" + lpeg.V"ltable" + lpeg.V"larith")))/
-        function(var, val) return {type = "assignment", var = var, val = val} end
-      ) *ws,
-    ]]
 
   ldeclassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
     function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
@@ -250,12 +245,21 @@ lif =
 
   lclassassignment = (lvarnorm * sepNoNL * lvarnorm * lpeg.V"lfunccallparams" * ws)/
     function(var, type, params) return {type = "classinit", ctype = type.val, var = var.val, val = params} end,
-
-  lclass = ("class" * ws * lvar * ws * ((":" * ws *(((lparent * ws * ","* ws)^0) * lparent))^-1) * ws * "{" * ws *
+--[[
+  * "{" * ws *
   (((lpeg.V"lclassassignment" + lpeg.V"lclassmethod" + lprimclassassignment + ltypedec) * ws * (lpeg.P","^-1) * ws)^0) *
   --(((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ((ws * (lpeg.P"," + "\n") * ws * (lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar))^0))^-1) *
-  ws * "}" * ws)/
-    function(name, ...) classes[name.val] = {{type = "class"}, ...}  return {type = "class", name = name.val} end,
+  ws * "}" * ws
+  --classes[name.val] = {{type = "class"}, ...}
+--]]
+  lclass = ("class" * ws * lvarnorm * ws * (("of" * ws * (lclasstype * ws))^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) )/
+    function(name, ...)   return {type = "class", name = name.val, val = {...}} end,
+
+ --(("with" * ws * ltraittype * ws)
+  ltrait = ("trait" * ws * lvarnorm * ws * (("of" * ws * lclasstype * ws)^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1))/
+    function(name, ...)
+      return {type = "trait", name = name.val, val = {...}}
+    end,
 
   lclassmethod = (lvar * lfuncvars * lpeg.V"lbody")/
     function(name, vars, ...) return {type = "classmethod", name = name.val, vars = vars, val = {...}} end,
@@ -291,7 +295,6 @@ local inspect = require"inspect"
 --http://stackoverflow.com/questions/1410862/concatenation-of-tables-in-lua
 function appendTable(t1,t2)
   local s1 = #t1
-  print(#t1)
   for i=1,#t2 do
       t1[s1+i] = t2[i]
   end
