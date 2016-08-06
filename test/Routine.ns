@@ -1,3 +1,10 @@
+--Created by Alex Crowley
+--On August 4, 2016
+--Copyright (c) 2016, TBD
+--Licensed under the MIT license
+--See LICENSE file for terms
+
+--Traits may be instantiated if they are not of a class, but not recommended
 trait Routine {
     
     e Entity
