@@ -116,8 +116,8 @@ local lprimclassassignment = (lvarnorm * sepNoNL * ((lvarnorm * sepNoNL)^-1) * "
 local ltypedec = (lvarnorm * sepNoNL * lvarnorm * ws)/
   function(var, type) return {type = "typedec", ctype = type.val, var = var.val} end
 
-local lclasstype = lvarnorm/function(var) var.type = "class" return var end
-local ltraittype = lvarnorm/function(var) var.type = "trait" return var end
+local lclasstype = lvarnorm/function(var) return {type = "class", name = var.val} end
+local ltraittype = lvarnorm/function(var) return {type = "trait", name = var.val} end
 --TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
 local cfg = lpeg.P{
   "S",
