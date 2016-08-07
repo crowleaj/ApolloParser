@@ -8,10 +8,12 @@
 
 
 class Entity { 
+
     x, y float64 = 0, 0
 
     routine Routine
     name string
+    
     Entity(name string, x, y float64){
         this->name = name
         move(x, y)

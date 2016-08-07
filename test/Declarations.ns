@@ -10,17 +10,23 @@
 gvar everywhere bool = 0
 
 func main() int {
-    --Four ways to declare an object
+    --Four ways to declare a primitive or object
 
     --Equals syntax to constant
     var a char = 1
+
     --Class declaration syntax
+    --Objects can only be initialized in this way, uninitialized must rely on assignment
     var b short(2)
+
     --Use of reference value, works as assignment for Objects
     var c int = b
+
     --Uninitialized variable
     var d long
 
-    --Other types are float and float64
+    --Other primitive types are float, float64 and string
+    --All number primitives (not string) "extend" number
+
     return 0
 }
