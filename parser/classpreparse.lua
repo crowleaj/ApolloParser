@@ -35,7 +35,7 @@ local function linearizeClasses(classes)
       end
   end
   for _, class in pairs(toplevel) do
-    applyIsa(classes, class, {})
+    applyIsa(classes, class, {"Any"})
   end
 end
 

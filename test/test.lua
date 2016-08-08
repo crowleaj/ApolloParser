@@ -1,4 +1,5 @@
 require "parser"
+--[[
 A = {
   b = function() B.b() end
 }
@@ -6,7 +7,8 @@ B = {
   b = function() print "hi" end
 }
 A.b()
---runfile("test/include",true)
+--]]
+runfile("test/include",true)
 --runfile("../scripts/controller.ns",false)
 
 --print(m.x)

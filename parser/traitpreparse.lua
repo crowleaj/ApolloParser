@@ -51,6 +51,9 @@ function preParseTraits(traits)
         trait.body = arg
       end
     end
+    if trait.class == nil then
+        trait.class = "Any"
+    end
     trait.val = nil
     trait.type = nil
   end
