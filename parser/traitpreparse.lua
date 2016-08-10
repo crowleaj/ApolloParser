@@ -23,32 +23,58 @@ function contains(list, item)
   return false
 end
 
+function removelistindices(list, indices)
+  if #indices > 0 then
+    for i=#indices,1 do
+      table.remove(list, indices[i])
+    end
+  end
+end
+
 local function establishIsa(traits, toplevel)
   local queued = {}
   local queue = Queue.new()
-  for name, v in pairs(toplevel) do
-    queued[name] = 1
-    Queue.enqueue(queue, {v, {"Any"}})
+  for _, v in pairs(toplevel) do
+    queued[v.name] = 1
+    Queue.enqueue(queue, v)
   end
-  while Queue.isempty(queue) == false do
-    local item = Queue.dequeue(queue)
-    local trait = item[1]
-    local isa = item[2]
-    for _, t in pairs(trait.traits) do
-      
+  while Queue.empty(queue) == false do
+    local trait = Queue.dequeue(queue)
+    local toremove = {}
+    for i, parent in pairs(trait.traits) do
+      if parent ~= "Any" then
+        for _, compareTrait in pairs(trait.traits) do
+          if compareTrait ~= parent then
+            if contains(traits[compareTrait].isa, parent) == true then
+              table.insert(toremove, i)
+            end
+          end
+        end
+      elseif #trait.traits > 1 then
+        table.insert(toremove, i)
+      end
     end
-    table.insert(isa, trait.name)
-    for 
-  end
-  for name, trait in pairs(traits) do  
-      if #trait.traits == 0 then
-        table.insert(toplevel, trait)
+    removelistindices(trait.traits, toremove)
+    local isa = {}
+    for _, parent in pairs(trait.traits) do 
+      if parent == "Any" then
+        table.insert(isa, parent)
       else
-        for _, t in pairs(trait.traits) do
-          t = traits[t]
-          table.insert(t.children, name)
+        for _, is in pairs(traits[parent].isa) do
+          if contains(isa, is) == false then
+            table.insert(isa, is)
+          end
         end
       end
+    end
+    table.insert(isa, trait.name)
+    trait.isa = isa
+    for _, child in pairs(trait.children) do
+      if queued[child] == nil then
+        queued[child] = 1
+        Queue.enqueue(queue, traits[child])
+      end
+    end
   end
 end
 
@@ -61,6 +87,9 @@ local function linearizeTraits(traits)
   local toplevel = {}
   for name, trait in pairs(traits) do  
       if #trait.traits == 0 then
+        table.insert(trait.traits, "Any")
+        table.insert(toplevel, trait)
+      elseif (#trait.traits == 1 and trait.traits[1] == "Any") then
         table.insert(toplevel, trait)
       else
         for _, t in pairs(trait.traits) do
@@ -69,6 +98,7 @@ local function linearizeTraits(traits)
         end
       end
   end
+  establishIsa(traits, toplevel)
   return toplevel
 end
 

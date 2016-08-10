@@ -4,8 +4,6 @@ trait TempChange of Liquid
 --var y func(int,int) int = 6
 class Liquid with TempChange
 
-trait TempChange of Liquid
-
 trait Boil of HotDrink with TempChange
 
 trait Freeze of ColdDrink with TempChange
