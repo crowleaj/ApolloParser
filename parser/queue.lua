@@ -12,6 +12,9 @@
       list[first] = value
     end
 
+    function Queue.empty(list)
+      return list.first > list.last
+    end
     function Queue.dequeue(list)
       local last = list.last
       if list.first > last then error("list is empty") end
