@@ -1,12 +1,30 @@
 --include "test/Routine"
 --func(int) (int, func(*double))
-trait TempChange of Liquid
+trait TempChange of Liquid {
+    adjust(){
+
+    }
+}
 --var y func(int,int) int = 6
-class Liquid with TempChange
+class Liquid with TempChange {
+    temperature float64
 
-trait Boil of HotDrink with TempChange
+    prepare(){
+        adjust()
+    }
+}
 
-trait Freeze of ColdDrink with TempChange
+trait Boil of HotDrink with TempChange {
+    adjust(){
+        temperature = 212
+    }
+}
+
+trait Freeze of ColdDrink with TempChange {
+    adjust(){
+        temperature = 32
+    }
+}
 
 --HotDrink now has trait Boil which overrides TempChange method adjust
 class HotDrink of Liquid with Boil

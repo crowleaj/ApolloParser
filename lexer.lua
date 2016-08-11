@@ -163,24 +163,39 @@ local cfg = lpeg.P{
       return t
     end,
 
-  lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns" * ws * lpeg.V"lbody")/
-    function(scope, name, params, returns, body) 
+  lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lpeg.V"lclassfunc")/
+    function(scope, func) 
+      func.scope = scope
+      return func end,
+
+  lclassfunc = (lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns" * ws * lpeg.V"lbody")/
+    function(name, params, returns, body) 
       if body == nil then
         body = returns
         returns = {}
       end
-    return {type = "function", scope = scope, name = name.val, params = params, returns = returns, body = body} end,
+    return {type = "function", name = name.val, params = params, returns = returns, body = body} end,
 
   ldeclassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
     function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
 
+  lclassdeclassignment = (lpeg.V"lclassdecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
+    function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
+
+  lassignment = (lvar * ws * "=" * ws * lval)/function(var, val) return {type = "assignment", name = var, val = val} end,
+
   ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
     function(returns) returns = returns or {} returns.type = "params" return returns end,
 --((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1)
-  ldecl = ((llocal + lglobal) * ws * lvarnorm * ws * lvarnorm)/
-    function(scope, var, ctype) return {type = "declaration", scope = scope, name = var.val, ctype = ctype} end,
+  lclassdecl = (lvarnorm * ws * lvarnorm)/
+    function(var, ctype) return {type = "declaration", name = var.val, ctype = ctype} end,
+
+  ldecl = ((llocal + lglobal) * ws * lpeg.V"lclassdecl")/
+    function(scope, decl) decl.scope = scope return decl end,
 
   lvariable = (lpeg.V"ldeclassignment" + (lpeg.V"ldecl" * ws)),
+
+  lclassvariable = (lpeg.V"lclassdeclassignment" + (lpeg.V"lclassdecl" * ws)),
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
@@ -225,7 +240,7 @@ lforloop = ((lforen + lfornorm) * ws * lpeg.V"lbody" * ws)/
   
 lbody = lpeg.Ct(
   "{" * ws *  
-  ((lpeg.V"S" * ws)^0) * ws * 
+  (((lpeg.V"S" + lpeg.V"lassignment") * ws)^0) * ws * 
   (lpeg.V"lreturnstatement"^-1) *
   lpeg.P"}" * ws),
   
@@ -242,21 +257,13 @@ lif =
 
   ltablelookup = (lvar * lpeg.V"ltablebody" * ws)/
       function(name, ...) return {type = "tablelookup", name = name, val = {...}} end,
-
-  lclassassignment = (lvarnorm * sepNoNL * lvarnorm * lpeg.V"lfunccallparams" * ws)/
-    function(var, type, params) return {type = "classinit", ctype = type.val, var = var.val, val = params} end,
---[[
-  * "{" * ws *
-  (((lpeg.V"lclassassignment" + lpeg.V"lclassmethod" + lprimclassassignment + ltypedec) * ws * (lpeg.P","^-1) * ws)^0) *
-  --(((lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ((ws * (lpeg.P"," + "\n") * ws * (lpeg.V"lassignment" + lpeg.V"lclassmethod" + ltypedec + lvar))^0))^-1) *
-  ws * "}" * ws
-  --classes[name.val] = {{type = "class"}, ...}
---]]
-  lclass = ("class" * ws * lvarnorm * ws * (("of" * ws * (lclasstype * ws))^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) )/
+  
+  lclass = ("class" * ws * lvarnorm * ws * (("of" * ws * (lclasstype * ws))^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) * lpeg.V"lclassbody")/
     function(name, ...)   return {type = "class", name = name.val, val = {...}} end,
 
+  lclassbody = lpeg.Ct(("{" * ws * (((lpeg.V"lclassfunc" + lpeg.V"lclassvariable") * ws)^0) * "}" * ws)^-1),
  --(("with" * ws * ltraittype * ws)
-  ltrait = ("trait" * ws * lvarnorm * ws * (("of" * ws * lclasstype * ws)^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1))/
+  ltrait = ("trait" * ws * lvarnorm * ws * (("of" * ws * lclasstype * ws)^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) * lpeg.V"lclassbody")/
     function(name, ...)
       return {type = "trait", name = name.val, val = {...}}
     end,

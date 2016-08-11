@@ -95,9 +95,9 @@ end
 
 function run(script,output)
   local p, classes = lex(script)
-  preparseClasses(classes)
+  --preparseClasses(classes)
   --print(inspect(classes))
-  --print(inspect(p))
+  print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)
