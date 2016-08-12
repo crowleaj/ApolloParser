@@ -4,7 +4,20 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function parseClass(line)
+function parseClass(class)
+    local inits = {}
+    for _, init in pairs(class.variableorder) do
+        table.insert(inits, class.variables[init]) 
+    end
+    class.constructor = class.constructor or {params = {}, returns = {}, body = {}}
+    appendTable(inits, class.constructor.body)
+    class.constructor.body = inits
+
+    local nTree = {}
+    table.insert(nTree, class.name)
+end
+
+function pparseClass(line)
     local nTree = {}
     classvars = {}
     assignments = {}

@@ -14,14 +14,6 @@ function verifyTraitHierarchy(traits, class, toplevel)
 
 end
 
-function contains(list, item)
-  for _, v in pairs(list) do
-    if item == v then
-      return true
-    end
-  end
-  return false
-end
 
 function removelistindices(list, indices)
   if #indices > 0 then
@@ -124,6 +116,7 @@ function preParseTraits(traits)
     end
     trait.val = nil
     trait.type = nil
+    preParseBody(trait)
   end
   linearizeTraits(traits)
 end

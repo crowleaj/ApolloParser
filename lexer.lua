@@ -7,6 +7,8 @@
 
 require "lpeg"
 
+require "parser/utils"
+
 local includes = {}
 local classes = {}
 
@@ -286,10 +288,8 @@ lif =
   lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
     function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
 
-  lcclass = ("cclass" * ws * lvar * ws * ((":" * ws * (((lparent * ws * ","* ws)^0) * lparent))^-1) * ws * "{" * ws *
-    (((lpeg.V"ldeclassignment" + lpeg.V"lclassmethod" + ltypedec + lvar) * ws * (lpeg.P","^-1) * ws)^0) *
-    ws * "}" * ws)/
-      function(name, ...) classes[name.val] = {{type = "cclass"}, ...} return {type = "cclass", name = name.val} end,
+  lcclass = ("cclass" * ws * lvarnorm * ws * (("of" * ws * (lclasstype * ws))^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) * lpeg.V"lclassbody")/
+    function(name, ...)   return {type = "cclass", name = name.val, val = {...}} end,
 
   lswitch = ("switch(" * ws * lpeg.V"larith" * ws * ")" * ws * "{" *
     ws * ((("case" * ws * lpeg.V"larith" * ws * (lpeg.V"S"^0))/function(case, ...) return {type = "case", cond = case, val = {...}} end)^0) * 
@@ -298,14 +298,6 @@ lif =
 
   lrhs = (lpeg.V"lclassreference" + lpeg.V"ltablelookup" + lpeg.V"lfunccall" + lval),
 }
-local inspect = require"inspect"
---http://stackoverflow.com/questions/1410862/concatenation-of-tables-in-lua
-function appendTable(t1,t2)
-  local s1 = #t1
-  for i=1,#t2 do
-      t1[s1+i] = t2[i]
-  end
-end
 
 local function lexdeps(script, parsed)
   parsed[script] = 1

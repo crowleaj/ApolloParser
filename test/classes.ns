@@ -1,0 +1,10 @@
+class Animal {
+    species string = "default"
+    Animal(){
+
+    }
+}
+
+func main(){
+    var an Animal()
+}

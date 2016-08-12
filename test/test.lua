@@ -8,7 +8,7 @@ B = {
 }
 A.b()
 --]]
-runfile("test/include",true)
+runfile("test/classes",true)
 --runfile("../scripts/controller.ns",false)
 
 --print(m.x)

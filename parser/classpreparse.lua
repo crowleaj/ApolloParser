@@ -20,6 +20,14 @@ local function applyIsa(classes, class, isa)
   class.children = nil
 end
 
+function applyVariableScope(class, parent)
+    for _, var in pairs(parent.variablenames) do
+        if contains(class.variablenames, var) == false then
+            table.insert(class.variablenames, var)
+        end
+    end
+end
+
 --[[
     Creates a class hierarchy by lineraizing the classes.
     Assigns to the parent class its direct children then uses
@@ -31,6 +39,7 @@ local function linearizeClasses(classes)
       if class.parent == nil then
         table.insert(toplevel, class)
       else
+        applyVariableScope(class, classes[class.parent])
         table.insert(classes[class.parent].children, name)
       end
   end
@@ -46,6 +55,7 @@ function preParseClasses(classes)
   for _, class in pairs(classes) do
     class.traits = {}
     class.children = {}
+    
     for _, arg in ipairs(class.val) do
       local type = arg.type
       if type == "class" then
@@ -58,6 +68,7 @@ function preParseClasses(classes)
     end
     class.val = nil
     class.type = nil
+    preParseBody(class)
   end
   linearizeClasses(classes)
 end

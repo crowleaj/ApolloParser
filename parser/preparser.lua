@@ -4,8 +4,45 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
+require "parser/utils"
+
 require "parser/classpreparse"
 require "parser/traitpreparse"
+
+--[[
+  Preparses class and trait body
+  Organizes the body into variable and function tables
+--]]
+function preParseBody(class)
+  local variables = {}
+  local variableorder = {}
+  local variablenames = {}
+  local functions = {}
+  for _, line in pairs(class.body) do
+    local type = line.type
+    if type == "declaration" then
+      variables[line.name] = line
+      table.insert(variablenames, line.name)
+    elseif type == "declassignment" then
+      variables[line.name] = line
+      table.insert(variablenames, line.name)
+      table.insert(variableorder, line.name)
+    elseif type == "function" then
+      if class.name == line.name then
+        class.constructor = line
+      else
+        functions[line.name] = line
+      end
+    else
+      print(type)
+    end
+  end
+  class.variables = variables
+  class.variableorder = variableorder
+  class.variablenames = variablenames
+  class.functions = functions
+  class.body = nil
+end
 
 --[[
     First pass of data
@@ -24,7 +61,6 @@ function preParse(tree)
   local global = {traits = {}, classes = {}, functions = {}, variables = {}}
   local files = {}
   local main = nil
-
   for num,f in ipairs(tree) do
     local file = {functions = {}, variables = {}}
     for _,line in ipairs(f) do
