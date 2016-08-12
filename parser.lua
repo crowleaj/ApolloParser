@@ -20,7 +20,8 @@ require "parser/queue"
 
 require "parser/preparser"
 
-local inspect = require "inspect"
+require "parser/utils"
+require "parser/typecheck"
 
 function parseLine(line, scope)
   local nTree = {}
@@ -71,13 +72,17 @@ function parse(tree)
   for _, class in pairs(global.classes) do
     parseClass(class)
   end
-  print(inspect(global))
+  --print(inspect(global))
   local nTree = {}
   local scope = {}
   for _,file in ipairs(files) do
     for _,line in ipairs(file) do
       table.insert(nTree,parseLine(line, scope))
     end
+  end
+  local result = checkFunction(main.body, main.returns, {global = global, file = files[#files], params = main.params})
+  if result ~= 0 then
+    return
   end
   table.insert(nTree, parseFunction(main))
   table.insert(nTree, "main()")

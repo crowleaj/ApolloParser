@@ -19,8 +19,14 @@ local sep = ((lpeg.P(" ") + "\r" + "\n" + "\t")^1)
 local lcomment = ("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws)/
   function(...) return {type = "comment", val = ...} end
 
-local lnum = (lpeg.P"-"^-1) * (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
-  function(num) return {type = "numberconst", val = num} end
+local linteger = ((lpeg.P"-"^-1) * (lpeg.R("09")^1))/
+  function(val) return {type = "constant", ctype = "long", val = val} end
+
+local lfloat = ((lpeg.P"-"^-1) * (((lpeg.R("09")^1) * ("." * (lpeg.R("09")^0))) + ((lpeg.R("09")^0) * ("." * (lpeg.R("09")^1)))))/
+  function(val) return {type = "constant", ctype = "float64", val = val} end
+local lnum = lfloat + linteger
+--(lpeg.P"-"^-1) * (((lpeg.R("09")^1) * (("." * (lpeg.R("09")^0)) + "")) + ("." * (lpeg.R("09")^1)))/
+ -- function(num) return {type = "numberconst", val = num} end
 
 local lstring = (("'" * (((lpeg.P(1)-"'")^0)/function(string) return string end) * "'") + ('"' * (((lpeg.P(1)-'"')^0)/function(string) return string end) * '"'))/
   function(string) return {type = "stringconst", val = string}  end
@@ -51,7 +57,7 @@ local larray = ("()" * lvarnorm)/function(val) return {type = "array", ctype = v
 
 local lmap = ("[]" * lvarnorm)/function(val) return {type = "map", ctype = val.val} end
 
-local lvartype = lmap + larray + llocalvar
+local lvartype = lmap + larray + lvar
 
 local llocal = ("var" * ws)/"local"
 local lglobal = ("gvar" * ws)/"global"
@@ -134,7 +140,7 @@ local cfg = lpeg.P{
 
   lfuncptr = ("func" * lpeg.V"lfuncptrparams" * ws * lpeg.V"lfuncreturns")/
     function(params, returns)
-      return {type = "function", params = args, returns = returns or {}}
+      return {type = "function", params = params, returns = returns or {}}
     end,
   
   ltype = lpeg.V"lfuncptr" + lvartype,
@@ -189,7 +195,7 @@ local cfg = lpeg.P{
   ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
     function(returns) returns = returns or {} returns.type = "params" return returns end,
 --((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1)
-  lclassdecl = (lvarnorm * ws * lvarnorm)/
+  lclassdecl = (lvarnorm * ws * (lpeg.V"lfuncptr" + lvarnorm))/
     function(var, ctype) return {type = "declaration", name = var.val, ctype = ctype} end,
 
   ldecl = ((llocal + lglobal) * ws * lpeg.V"lclassdecl")/
