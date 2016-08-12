@@ -47,7 +47,7 @@ local lval = lconst + lvar
 
 local lnumval = lnum + lvar
 
-local llocalvar = lvarnorm/function(val) return {type = "local", ctype = val.val} end
+local llocalvar = lvarnorm/function(val) return {type = "flat", ctype = val.val} end
 
 local lpointer = ("*" * ws * lvarnorm)/function(val) return {type = "pointer", ctype = val.val} end 
 
@@ -57,7 +57,7 @@ local larray = ("()" * lvarnorm)/function(val) return {type = "array", ctype = v
 
 local lmap = ("[]" * lvarnorm)/function(val) return {type = "map", ctype = val.val} end
 
-local lvartype = lmap + larray + lvar
+local lvartype = lmap + larray + llocalvar
 
 local llocal = ("var" * ws)/"local"
 local lglobal = ("gvar" * ws)/"global"
@@ -195,7 +195,7 @@ local cfg = lpeg.P{
   ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
     function(returns) returns = returns or {} returns.type = "params" return returns end,
 --((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1)
-  lclassdecl = (lvarnorm * ws * (lpeg.V"lfuncptr" + lvarnorm))/
+  lclassdecl = (lvarnorm * ws * (lpeg.V"lfuncptr" + llocalvar))/
     function(var, ctype) return {type = "declaration", name = var.val, ctype = ctype} end,
 
   ldecl = ((llocal + lglobal) * ws * lpeg.V"lclassdecl")/
