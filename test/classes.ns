@@ -3,6 +3,9 @@ class Animal {
     Animal(){
 
     }
+    bark(){
+        print("Woof!")
+    }
 }
 
 func main(){

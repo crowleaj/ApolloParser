@@ -9,8 +9,9 @@ function parseFunction(fcn)
   if fcn.scope == "local" then
     table.insert(nTree, "local ")
   end
-  table.insert(nTree, "function ")
   table.insert(nTree, fcn.name)
+  table.insert(nTree, " = function")
+
   table.insert(nTree, parseFunctionValues(fcn.params))
   table.insert(nTree, "\n")
   table.insert(nTree, parseFunctionBody(fcn.body))

@@ -69,12 +69,14 @@ end
 
 function parse(tree)
   local global, files, main = preParse(tree)
-  for _, class in pairs(global.classes) do
-    parseClass(class)
-  end
   --print(inspect(global))
   local nTree = {}
   local scope = {}
+
+  for _, class in pairs(global.classes) do
+    table.insert(nTree, parseClass(class))
+  end
+
   for _,file in ipairs(files) do
     for _, func in pairs(file.functions) do
       table.insert(nTree, parseFunction(func))
@@ -82,7 +84,7 @@ function parse(tree)
   end
   local result = checkFunction(main.body, main.returns, {global = global, file = files[#files], params = main.params})
   if result ~= 0 then
-    return
+    return ""
   end
   table.insert(nTree, parseFunction(main))
   table.insert(nTree, "main()")
