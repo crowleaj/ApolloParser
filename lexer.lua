@@ -29,7 +29,7 @@ local lnum = lfloat + linteger
  -- function(num) return {type = "numberconst", val = num} end
 
 local lstring = (("'" * (((lpeg.P(1)-"'")^0)/function(string) return string end) * "'") + ('"' * (((lpeg.P(1)-'"')^0)/function(string) return string end) * '"'))/
-  function(string) return {type = "stringconst", val = string}  end
+  function(string) return {type = "constant", ctype = "string", val = string}  end
 
 local lconst = (lnum + lstring)
 

@@ -1,7 +1,7 @@
 
-local primitives = {bool = 1, char = 2, short = 3, int = 4, long = 5, float = 6, float64 = 7, string = 1}
+local primitives = {bool = 1, char = 2, short = 3, int = 4, long = 5, float = 6, float64 = 7, number = 8, string = 0}
 
-local function isPrimitive(type)
+function isPrimitive(type)
     return (primitives[type] ~= nil)
 end
 

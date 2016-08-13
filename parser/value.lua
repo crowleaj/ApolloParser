@@ -26,19 +26,25 @@ function parseDeclaration(val)
   if val.type == "declassignment" then
     table.insert(nTree, "=")
     local type = val.ctype.val
-    if type == "number" or type == "char" or type == "short" or type == "int" or type == "long" or type == "float" or type == "float64" then
-      table.insert(nTree, parseValue(val.val))
-    end
+    table.insert(nTree, parseValue(val.val))
+    -- if isPrimitive(type) then
+      
+    -- end
   end
   table.insert(nTree, "\n")
   return table.concat(nTree, " ")
 end
 function parseValue(rhs, scope)
   local type = rhs.type
+  print(type)
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
     return rhs.val
-  elseif type == "stringconst" then
-    return "'" .. rhs.val .. "'"
+  elseif type == "constant" then
+    if rhs.ctype == "string" then
+      return "'" .. rhs.val .. "'"
+    else
+      return rhs.val
+    end
   elseif type == "function" then
     return parseFunction(rhs)
   elseif type == "parentheses" then
