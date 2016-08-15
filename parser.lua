@@ -26,7 +26,7 @@ require "parser/typecheck"
 function parseLine(line, scope)
   local nTree = {}
   local type = line.type
-  if type == "assignment" or type == "declaration" or type == "classinit" then
+  if type == "declaration" or type == "classinit" then
     table.insert(nTree, parseAssignment(line, scope))
   elseif type == "functioncall" then
     table.insert(nTree, parseValue(line, scope))
@@ -46,7 +46,7 @@ function parseLine(line, scope)
     table.insert(nTree, ".new\n")--]]
   elseif type == "function" then
     table.insert(nTree, parseFunction(line))
-  elseif type == "declassignment" then
+  elseif type == "assignment" or type == "declassignment" then
     table.insert(nTree, parseDeclaration(line))
   elseif type == "ifblock" then
     table.insert(nTree, parseIfBlock(line))
@@ -106,7 +106,7 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  --print(inspect(p))
+  print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

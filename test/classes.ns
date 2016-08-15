@@ -4,6 +4,7 @@ class Animal {
         species = "cow"
     }
     bark(){
+        this->species = species
         print("Woof!")
     }
 }

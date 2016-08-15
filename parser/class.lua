@@ -17,14 +17,16 @@ function parseClass(class)
     table.insert(nTree, "\n")
 
     --Class variables instantiation
-    table.insert(nTree, "local this = {")
+    table.insert(nTree, "local self = {")
     for _, init in pairs(class.variableorder) do
         table.insert(nTree, parseLine(class.variables[init]))
         table.insert(nTree, ",") 
     end
-    table.insert(nTree, "}\nsetmetatable(this," .. class.name .. ")\n")
+    table.insert(nTree, "}\nsetmetatable(self," .. class.name .. ")\n")
+
+    table.insert(nTree, parseFunctionBody(class.constructor.body))
     --End of constructor, beginnig of function definitions
-    table.insert(nTree, "return this\nend\n")
+    table.insert(nTree, "return self\nend\n")
     for _,fcn in pairs(class.functions) do
         table.insert(nTree, ",")
         table.insert(fcn.params, 1, {type = "variable", name = "self"})

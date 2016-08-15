@@ -190,7 +190,7 @@ local cfg = lpeg.P{
   lclassdeclassignment = (lpeg.V"lclassdecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
     function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
 
-  lassignment = (lvar * ws * "=" * ws * lval)/function(var, val) return {type = "assignment", name = var, val = val} end,
+  lassignment = (lvar * ws * "=" * ws * lval)/function(var, val) return {type = "assignment", annotation = var.annotation, name = var.val, val = val} end,
 
   ldeclparams = lpeg.Ct("(" * ws * ((lval * ws * (("," * ws * lval)^0))^-1) * ws * ")" )/
     function(returns) returns = returns or {} returns.type = "params" return returns end,

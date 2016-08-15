@@ -28,9 +28,11 @@ function contains(pair, nopair, key)
     return false
 end
 
-function annotateMethod(method, classvars, annotation)
+function annotateMethod(method, classes, classvars)
   for _, line in pairs(method) do
     local type = line.type
+    if type == "assignment" then
+    end
   end
 end
 
