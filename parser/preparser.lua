@@ -34,7 +34,7 @@ function preParseBody(class)
         functions[line.name] = line
       end
     else
-      print(type)
+      print("UNKNOWN Class body" .. type)
     end
   end
   class.variables = variables

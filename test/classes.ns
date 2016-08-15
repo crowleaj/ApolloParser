@@ -1,7 +1,7 @@
 class Animal {
     species string = "default"
     Animal(){
-
+        species = "cow"
     }
     bark(){
         print("Woof!")

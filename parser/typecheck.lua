@@ -61,6 +61,6 @@ function checkFunction(body, returns, scope)
             end
         end
     end
-    print(inspect(locals))
+    --print(inspect(locals))
     return 0
 end

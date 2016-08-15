@@ -36,7 +36,7 @@ function parseDeclaration(val)
 end
 function parseValue(rhs, scope)
   local type = rhs.type
-  print(type)
+  --print(type)
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
     return rhs.val
   elseif type == "constant" then
@@ -114,7 +114,7 @@ function parseValue(rhs, scope)
     table.insert(nTree, parseValues(rhs.args))
     return table.concat(nTree)
   else
-    print(type)
+    print("ERROR Processing value " .. type)
     return "ERR"
   end
 end

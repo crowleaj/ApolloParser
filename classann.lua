@@ -4,23 +4,6 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-
---http://lua-users.org/wiki/CopyTable
-function deepcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[deepcopy(orig_key)] = deepcopy(orig_value)
-        end
-        setmetatable(copy, deepcopy(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
 function contains(pair, nopair, key)
     for _,v in ipairs(pair.vars) do
         if v == key then
@@ -43,6 +26,12 @@ function contains(pair, nopair, key)
         end
     end
     return false
+end
+
+function annotateMethod(method, classvars, annotation)
+  for _, line in pairs(method) do
+    local type = line.type
+  end
 end
 
 function annotateSingleInstanceVariables(vars, funcvars, inst, ann)

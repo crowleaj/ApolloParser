@@ -39,7 +39,7 @@ local lvarnorm = ((("_" + lpeg.R("az", "AZ")) * (("_" + lpeg.R("az", "AZ", "09")
   function(var) return {type = "variable", val = var} end
 
 local lvarclass = lpeg.P"this->" * (lvarnorm/
-  function(var) var.type = "classvariable" return var end)
+  function(var) var.type = "variable" var.annotation = "self" return var end)
 
 local lvar = lvarclass + lvarnorm
 
