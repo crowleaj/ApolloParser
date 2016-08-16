@@ -4,8 +4,13 @@ class Animal {
         species = "cow"
     }
     bark(){
-        this->species = species
+        this->species = this->species
         print("Woof!")
+    }
+}
+class Cow of Animal{
+    Cow(){
+        species = "cow"
     }
 }
 

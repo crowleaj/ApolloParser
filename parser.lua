@@ -73,9 +73,8 @@ function parse(tree)
   local nTree = {}
   local scope = {}
 
-  for _, class in pairs(global.classes) do
-    table.insert(nTree, parseClass(class))
-  end
+  table.insert(nTree, parseClasses(global.classes))
+
 
   for _,file in ipairs(files) do
     for _, func in pairs(file.functions) do
@@ -106,7 +105,7 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  print(inspect(p))
+  --print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

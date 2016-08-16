@@ -4,8 +4,19 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function parseClass(class)
+require "classann"
+
+function parseClasses(classes)
+    local nTree = {}
+    for _, class in pairs(classes) do
+        table.insert(nTree, parseClass(class, classes))
+    end
+    return table.concat(nTree)
+end
+
+function parseClass(class, classes)
     class.constructor = class.constructor or {params = {}, returns = {}, body = {}}
+    annotateMethod(class.constructor, classes, class.variablenames)
     -- appendTable(inits, class.constructor.body)
     -- class.constructor.body = inits
 
@@ -17,12 +28,23 @@ function parseClass(class)
     table.insert(nTree, "\n")
 
     --Class variables instantiation
-    table.insert(nTree, "local self = {")
-    for _, init in pairs(class.variableorder) do
-        table.insert(nTree, parseLine(class.variables[init]))
-        table.insert(nTree, ",") 
+    table.insert(nTree, "local self = ")
+    if class.parent == nil then
+        table.insert(nTree, "{")
+        for _, init in pairs(class.variableorder) do
+            table.insert(nTree, parseLine(class.variables[init]))
+            table.insert(nTree, ",") 
+        end
+        table.insert(nTree, "}")
+    else
+        table.insert(nTree, class.parent)
+        table.insert(nTree, ".new()")
+        for _, init in pairs(class.variableorder) do
+            table.insert(nTree, parseLine(class.variables[init]))
+            table.insert(nTree, ",") 
+        end
     end
-    table.insert(nTree, "}\nsetmetatable(self," .. class.name .. ")\n")
+    table.insert(nTree, "\nsetmetatable(self," .. class.name .. ")\n")
 
     table.insert(nTree, parseFunctionBody(class.constructor.body))
     --End of constructor, beginnig of function definitions

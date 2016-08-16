@@ -38,7 +38,6 @@ function parseDeclaration(val)
     table.insert(nTree, parseValue(val.val))
   end
   table.insert(nTree, "\n")
-  print(inspect(nTree))
   return table.concat(nTree)
 end
 
@@ -46,6 +45,9 @@ function parseValue(rhs, scope)
   local type = rhs.type
   --print(type)
   if type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
+    if rhs.annotation ~= nil then
+      return rhs.annotation .. "." .. rhs.val
+    end
     return rhs.val
   elseif type == "constant" then
     if rhs.ctype == "string" then

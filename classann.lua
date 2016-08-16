@@ -4,34 +4,40 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function contains(pair, nopair, key)
-    for _,v in ipairs(pair.vars) do
-        if v == key then
-            for _,v in ipairs(nopair) do
-                if v == key then
-                    return false
-                end
-            end
-        return true
-        end
-    end
-    for _,v in ipairs(pair.methods) do
-        if v.name == key then
-            for _,v in ipairs(nopair) do
-                if v == key then
-                    return false
-                end
-            end
-        return true
-        end
-    end
-    return false
-end
+-- function contains(pair, nopair, key)
+--     for _,v in ipairs(pair.vars) do
+--         if v == key then
+--             for _,v in ipairs(nopair) do
+--                 if v == key then
+--                     return false
+--                 end
+--             end
+--         return true
+--         end
+--     end
+--     for _,v in ipairs(pair.methods) do
+--         if v.name == key then
+--             for _,v in ipairs(nopair) do
+--                 if v == key then
+--                     return false
+--                 end
+--             end
+--         return true
+--         end
+--     end
+--     return false
+-- end
 
 function annotateMethod(method, classes, classvars)
-  for _, line in pairs(method) do
+  --print(inspect(classvars))
+  --print(inspect(classvars))
+  for _, line in pairs(method.body) do
     local type = line.type
     if type == "assignment" then
+      if contains(classvars, line.name) then
+        line.annotation = "self"
+      end
+      --print(inspect(line))
     end
   end
 end

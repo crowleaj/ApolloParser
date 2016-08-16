@@ -6,9 +6,14 @@
 
 inspect = require "inspect"
 
-function contains(list, item)
+local function ident(item)
+    return item
+end
+
+function contains(list, item, ilambda)
+  ilambda = ilambda or ident
   for _, v in pairs(list) do
-    if item == v then
+    if item == ilambda(v) then
       return true
     end
   end
