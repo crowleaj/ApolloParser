@@ -51,9 +51,17 @@ function parseClass(class, classes)
     table.insert(nTree, "return self\nend\n")
     for _,fcn in pairs(class.functions) do
         table.insert(nTree, ",")
-        table.insert(fcn.params, 1, {type = "variable", name = "self"})
-        --annotateInstanceVariables({vars = classvars, methods = methods}, fcn.vars, fcn.val, "self")
-        table.insert(nTree, parseFunction(fcn))
+        if fcn.type == "functionref" then
+            table.insert(nTree, fcn.name)
+            table.insert(nTree, "=")
+            table.insert(nTree, fcn.class)
+            table.insert(nTree, ".")
+            table.insert(nTree, fcn.name)
+        else
+            table.insert(fcn.params, 1, {type = "variable", name = "self"})
+            --annotateInstanceVariables({vars = classvars, methods = methods}, fcn.vars, fcn.val, "self")
+            table.insert(nTree, parseFunction(fcn))
+        end
     end
     --Closing of class definition
     table.insert(nTree, "}\n")
@@ -79,11 +87,11 @@ function pparseClass(line)
         table.insert(classvars, v.var.val)
         table.insert(assignments, v)
         elseif type == "classmethod" then
-        if v.name == line.name then
-            constructor = v
-        else
-            table.insert(methods,v)
-        end
+            if v.name == line.name then
+                constructor = v
+            else
+                table.insert(methods,v)
+            end
         else
         end
     end

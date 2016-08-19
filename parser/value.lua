@@ -20,7 +20,7 @@ end
 function parseDeclaration(val)
   local nTree = {}
   if val.scope == "local" then
-    table.insert(nTree, "local")
+    table.insert(nTree, "local ")
   end
   if val.annotation ~= nil then
     table.insert(nTree, val.annotation)
@@ -29,11 +29,23 @@ function parseDeclaration(val)
   table.insert(nTree, val.name)
   table.insert(nTree, "=")
   if val.type == "declassignment" then
-    local type = val.ctype.val
-    table.insert(nTree, parseValue(val.val))
-    -- if isPrimitive(type) then
-      
-    -- end
+    local type = val.ctype.ctype
+     if isPrimitive(type) then
+      table.insert(nTree, parseValue(val.val))    
+     else
+      table.insert(nTree, type)
+      table.insert(nTree, ".new")
+      table.insert(nTree,"(")
+      for _, arg in ipairs(val.val) do
+        table.insert(nTree,parseValue(arg, scope))
+        table.insert(nTree,",")
+      end
+      if #val.val >0 then 
+        table.remove(nTree)
+      end
+      table.insert(nTree,")")
+         print(inspect(val))
+     end
   elseif val.type == "assignment" then
     table.insert(nTree, parseValue(val.val))
   end

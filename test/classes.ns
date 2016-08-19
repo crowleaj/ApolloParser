@@ -3,17 +3,28 @@ class Animal {
     Animal(){
         species = "cow"
     }
+    sprint(){
+        print("Sprinting")
+    }
     bark(){
         this->species = this->species
         print("Woof!")
     }
 }
+
 class Cow of Animal{
     Cow(){
         species = "cow"
     }
-}
 
+    Animal:sprint
+    
+    bark(){
+        Animal:bark()
+        print("MOO!")
+    }
+}
 func main(){
-    var an Animal()
+    var an Cow()
+    an:bark()
 }

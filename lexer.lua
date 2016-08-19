@@ -20,7 +20,7 @@ local lcomment = ("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws)/
   function(...) return {type = "comment", val = ...} end
 
 local linteger = ((lpeg.P"-"^-1) * (lpeg.R("09")^1))/
-  function(val) return {type = "constant", ctype = "long", val = val} end
+  function(val) return {type = "constant", ctype = "char", val = val} end
 
 local lfloat = ((lpeg.P"-"^-1) * (((lpeg.R("09")^1) * ("." * (lpeg.R("09")^0))) + ((lpeg.R("09")^0) * ("." * (lpeg.R("09")^1)))))/
   function(val) return {type = "constant", ctype = "float64", val = val} end
@@ -269,7 +269,10 @@ lif =
   lclass = ("class" * ws * lvarnorm * ws * (("of" * ws * (lclasstype * ws))^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) * lpeg.V"lclassbody")/
     function(name, ...)   return {type = "class", name = name.val, val = {...}} end,
 
-  lclassbody = lpeg.Ct(("{" * ws * (((lpeg.V"lclassfunc" + lpeg.V"lclassvariable") * ws)^0) * "}" * ws)^-1),
+  lclassfuncref = (lvarnorm * ":" * lvarnorm * ws)/
+    function(class, func) return {type = "functionref", class = class.val, name = func.val} end,
+
+  lclassbody = lpeg.Ct(("{" * ws * (((lpeg.V"lclassfunc" + lpeg.V"lclassvariable" + lpeg.V"lclassfuncref") * ws)^0) * "}" * ws)^-1),
  --(("with" * ws * ltraittype * ws)
   ltrait = ("trait" * ws * lvarnorm * ws * (("of" * ws * lclasstype * ws)^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) * lpeg.V"lclassbody")/
     function(name, ...)

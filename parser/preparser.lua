@@ -33,6 +33,8 @@ function preParseBody(class)
       else
         functions[line.name] = line
       end
+    elseif type == "functionref" then
+      functions[line.name] = line
     else
       print("UNKNOWN Class body" .. type)
     end

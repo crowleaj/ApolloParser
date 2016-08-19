@@ -74,28 +74,6 @@ function preParseClasses(classes)
 end
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function preparseClass(cname, class)
     local c = {methods = {}, vars = {}, parents = {}, assignments = {}}
     local methods = c.methods
