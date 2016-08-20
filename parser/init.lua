@@ -16,11 +16,9 @@ require "parser/class"
 
 require "classann"
 
-require "parser/queue"
-
 require "preparser"
 
-require "parser/utils"
+require "utils"
 require "parser/typecheck"
 
 function parseLine(line, scope)

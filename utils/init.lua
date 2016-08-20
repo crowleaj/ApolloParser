@@ -4,7 +4,8 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-inspect = require "inspect"
+inspect = require "utils/inspect"
+require "utils/queue"
 
 local function ident(item)
     return item

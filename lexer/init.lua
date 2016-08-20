@@ -6,7 +6,7 @@
 
 package.cpath = package.cpath .. ";./lpeg/?.dll"
 require "lpeg"
-require "parser/utils"
+require "utils"
 
 local includes = {}
 local classes = {}

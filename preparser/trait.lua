@@ -4,7 +4,6 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-  require "parser/queue"
   require "preparser/common"
   
 --TODO: Consider traits after classes are working properly

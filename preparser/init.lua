@@ -4,7 +4,7 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-require "parser/utils"
+require "utils"
 
 require "preparser/class"
 require "preparser/trait"
