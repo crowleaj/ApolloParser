@@ -4,9 +4,8 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-
+package.cpath = package.cpath .. ";./lpeg/?.dll"
 require "lpeg"
-
 require "parser/utils"
 
 local includes = {}

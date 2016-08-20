@@ -4,37 +4,17 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
--- function contains(pair, nopair, key)
---     for _,v in ipairs(pair.vars) do
---         if v == key then
---             for _,v in ipairs(nopair) do
---                 if v == key then
---                     return false
---                 end
---             end
---         return true
---         end
---     end
---     for _,v in ipairs(pair.methods) do
---         if v.name == key then
---             for _,v in ipairs(nopair) do
---                 if v == key then
---                     return false
---                 end
---             end
---         return true
---         end
---     end
---     return false
--- end
+function paramName(param)
+  return param.name
+end
 
-function annotateMethod(method, classes, classvars)
+function annotateMethod(classes, classvars, method)
   --print(inspect(classvars))
   --print(inspect(classvars))
   for _, line in pairs(method.body) do
     local type = line.type
     if type == "assignment" then
-      if contains(classvars, line.name) then
+      if (contains(method.params, line.name, paramName) == false) and contains(classvars, line.name) then
         line.annotation = "self"
       end
       --print(inspect(line))

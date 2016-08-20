@@ -44,7 +44,6 @@ function parseDeclaration(val)
         table.remove(nTree)
       end
       table.insert(nTree,")")
-         print(inspect(val))
      end
   elseif val.type == "assignment" then
     table.insert(nTree, parseValue(val.val))

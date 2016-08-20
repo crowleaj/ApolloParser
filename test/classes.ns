@@ -7,7 +7,7 @@ class Animal {
         print("Sprinting")
     }
     bark(){
-        this->species = this->species
+        species = this->species
         print("Woof!")
     }
 }

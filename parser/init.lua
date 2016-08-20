@@ -18,7 +18,7 @@ require "classann"
 
 require "parser/queue"
 
-require "parser/preparser"
+require "preparser"
 
 require "parser/utils"
 require "parser/typecheck"
@@ -36,8 +36,6 @@ function parseLine(line, scope)
     table.insert(nTree, "\n")
   elseif type == "forloop" then
     table.insert(nTree, parseFor(line))
-  elseif type == "class" then
-    table.insert(nTree, parseClass(line))
   elseif type == "cclass" then
     --[[table.insert(nTree, "local ")
     table.insert(nTree, line.name)
@@ -56,7 +54,6 @@ function parseLine(line, scope)
   elseif type == "comment" then
     --print(line.val)
   else
-    --print(type)
     print("unrecognized instruction: " .. inspect(line))
   end
   return table.concat(nTree)
@@ -65,15 +62,13 @@ end
 --Each file will have functions, variables and body, last file will have main
 
 
-
-
 function parse(tree)
   local global, files, main = preParse(tree)
   --print(inspect(global))
   local nTree = {}
   local scope = {}
 
-  table.insert(nTree, parseClasses(global.classes))
+  table.insert(nTree, parseClasses(global.classes, global.classtoplevel))
 
 
   for _,file in ipairs(files) do
@@ -105,7 +100,7 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  print(inspect(p))
+  --print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

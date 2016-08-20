@@ -6,45 +6,8 @@
 
 require "parser/utils"
 
-require "parser/classpreparse"
-require "parser/traitpreparse"
-
---[[
-  Preparses class and trait body
-  Organizes the body into variable and function tables
---]]
-function preParseBody(class)
-  local variables = {}
-  local variableorder = {}
-  local variablenames = {}
-  local functions = {}
-  for _, line in pairs(class.body) do
-    local type = line.type
-    if type == "declaration" then
-      variables[line.name] = line
-      table.insert(variablenames, line.name)
-    elseif type == "declassignment" then
-      variables[line.name] = line
-      table.insert(variablenames, line.name)
-      table.insert(variableorder, line.name)
-    elseif type == "function" then
-      if class.name == line.name then
-        class.constructor = line
-      else
-        functions[line.name] = line
-      end
-    elseif type == "functionref" then
-      functions[line.name] = line
-    else
-      print("UNKNOWN Class body" .. type)
-    end
-  end
-  class.variables = variables
-  class.variableorder = variableorder
-  class.variablenames = variablenames
-  class.functions = functions
-  class.body = nil
-end
+require "preparser/class"
+require "preparser/trait"
 
 --[[
     First pass of data
@@ -91,7 +54,8 @@ function preParse(tree)
     end
     table.insert(files, file)
   end
-  preParseClasses(global.classes)
+  --Top level is needed for top-down parsing to ensure no nil references
+  global.classtoplevel = preParseClasses(global.classes)
   preParseTraits(global.traits)
 
   return global, files, main
