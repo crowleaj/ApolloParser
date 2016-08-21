@@ -12,7 +12,7 @@ sep = ((lpeg.P(" ") + "\r" + "\n" + "\t")^1)
 lkeywords = (lpeg.P"this" + "trait" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar" + "func" + "gfunc")
 
 --COMMENTS
-lcomment = ("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws)/
+lcomment = (("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws) + ("/*" * ((lpeg.P(1)-"*/")^0) * "*/" * ws))/
   function(...) return {type = "comment", val = ...} end
 
 --CONSTANTS
