@@ -34,12 +34,6 @@ function parseLine(line, scope)
     table.insert(nTree, "\n")
   elseif type == "forloop" then
     table.insert(nTree, parseFor(line))
-  elseif type == "cclass" then
-    --[[table.insert(nTree, "local ")
-    table.insert(nTree, line.name)
-    table.insert(nTree, "=")
-    table.insert(nTree, line.name)
-    table.insert(nTree, ".new\n")--]]
   elseif type == "function" then
     table.insert(nTree, parseFunction(line))
   elseif type == "assignment" or type == "declassignment" then
@@ -98,7 +92,7 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  --print(inspect(p))
+  print(inspect(p))
   p = parse(p)
   if output == true then
       print(p)

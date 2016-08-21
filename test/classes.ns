@@ -20,11 +20,11 @@ class Cow of Animal{
     Animal:sprint
     
     bark(){
-        Animal:bark()
+        --Animal:bark()
         print("MOO!")
     }
 }
 func main(){
     var an Cow()
-    an:bark()
+    --an:bark()
 }

@@ -1,0 +1,55 @@
+Grammar notation follows Golang documentation specification
+https://golang.org/ref/spec
+
+The syntax is specified using Extended Backus-Naur Form (EBNF):
+
+Production  = production_name "=" [ Expression ] "." .
+Expression  = Alternative { "|" Alternative } .
+Alternative = Term { Term } .
+Term        = production_name | token [ "…" token ] | Group | Option | Repetition .
+Group       = "(" Expression ")" .
+Option      = "[" Expression "]" .
+Repetition  = "{" Expression "}" .
+
+Productions are expressions constructed from terms and the following operators, in increasing precedence:
+
+|   alternation
+()  grouping
+[]  option (0 or 1 times)
+{}  repetition (0 to n times)
+
+Letters and Digits
+
+letter = "a" ... "z" | "A" ... "Z" | "_" .
+digit = "0" ... "9" .
+
+Comments
+
+There exist two forms of comments:
+    1. Line comments start with -- and end with a newline
+    2. Block comments start with /* and end with */
+
+Identifiers
+
+Identifiers are used to name entities such as variables and types.
+
+identifier = letter { letter | digit } .
+
+Keywords
+
+The following keywords are reserved and unavailable as identifiers.
+
+Operators and Delimeters
+
+Declarations
+
+Declarations are used to declare a variable ahead of time, state its scope and declare its type.
+
+delclaration = ( "var" | "gvar" ) identifier identifier .
+
+Assignments
+
+Assignments can be in the same statement as declarations or can be assigned after declaration.  
+Assignments of objects pass the reference whereas primitive assignments pass the value.
+
+assignment = identifier "=" (identifier + arithmetic) .
