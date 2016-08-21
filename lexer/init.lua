@@ -9,6 +9,7 @@ require "lpeg"
 require "utils"
 require "lexer/regexps"
 
+require "lexer/function"
 local cfg = require "lexer/cfg"
 
 local function lexdeps(script, parsed)
