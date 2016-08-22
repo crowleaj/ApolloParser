@@ -59,7 +59,7 @@ end
 function parseFiles(tree)
   --local global, files, main = preParse(tree)
   --print(inspect(global))
-  local nTree = {"do\n"}
+  local nTree = {"do"}
   local scope = {}
 --[[
   table.insert(nTree, parseClasses(global.classes, global.classtoplevel))
@@ -86,7 +86,7 @@ function parseFiles(tree)
     table.insert(nTree, parsed)
   end
   table.insert(nTree, "end")
-  return 0, table.concat(nTree)
+  return 0, table.concat(nTree, "\n")
 end 
 
 function loadfile(file)

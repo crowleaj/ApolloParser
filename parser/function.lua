@@ -15,7 +15,10 @@ function parseFunction(fcn)
   table.insert(nTree, parseFunctionValues(fcn.params))
   table.insert(nTree, "\n")
   table.insert(nTree, parseFunctionBody(fcn.body))
-  table.insert(nTree, "end\n")
+  table.insert(nTree, "end")
+  if fcn.name == "main" then
+    table.insert(nTree, "\nmain()")
+  end
   return table.concat(nTree)
 end
 
