@@ -4,7 +4,7 @@ No assignments, no bodies
 */
 gvar a int
 var b int
-
+gvar b float
 gfunc add(){
 }
 

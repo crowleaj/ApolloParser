@@ -64,3 +64,68 @@ function checkFunction(body, returns, scope)
     --print(inspect(locals))
     return 0
 end
+
+function innermostFuncScope(scope)
+    local func = scope.func
+    while func.func ~= nil do
+        func = func.func
+    end
+    return func
+end
+
+--Gets variable name in scope.  Parameter for contains function
+function getvarname(var)
+    return var.name
+end
+
+--[[
+    Runs a validation check on a declaration to make sure the declaration is valid.
+    Also updates the scope where the declaration occured
+    Returns:
+        0 no ERROR
+        1 ERROR
+--]]
+function checkDeclaration(line, scope)
+    local name = line.name
+    if line.scope == "global" then
+        --Global variable declared in class or function
+        if scope.func ~= nil then
+            print("ERROR: global variable " .. name .. " must be declared in outermost scope")
+            return 1
+        --Global variable already declared
+        elseif contains(scope.global.variables, name, getvarname) == true then
+            print("ERROR: global variable " .. name .. " already declared")
+            return 1
+        --Local variable declaration followed by global declaration
+        elseif contains(scope.file.variables, name, getvarname) == true then
+            print("ERROR: global variable " .. name .. " already declared with file scope")
+            return 1
+        else
+            table.insert(scope.global.variables, line)            
+        end
+
+    else
+        if scope.func ~= nil then
+            --Variable already declared in function scope
+            if contains(scope.func.varaibles, name, getvarname) == true then
+                print("ERROR: variable " .. name .. " already declared in scope")
+                return 1
+            else
+                table.insert(scope.func.variables, line)
+            end
+        --Varible already declared in file
+        elseif contains(scope.file.variables, name, getvarname) == true then
+            print("ERROR: variable " .. name .. " already declared in file")
+            return 1
+        --Global variable declaration followed by local declaration
+        elseif contains(scope.global.variables, name, getvarname) == true then
+            print("ERROR: global variable " .. name .. " already declared with global scope")
+            return 1
+        else
+            table.insert(scope.file.variables, line)           
+        end
+
+    end
+    --No problems
+    return 0
+end

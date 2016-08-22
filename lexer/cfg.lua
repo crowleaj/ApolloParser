@@ -8,8 +8,8 @@
 return lpeg.P{
   "S",
 
-  S = (lpeg.V"lfunc" +  lcomment + linclude + (lpeg.V"lfunccall" * ws) + lpeg.V"ldeclassignment" + 
-  lpeg.V"lclass" + lpeg.V"lvariable")^1, 
+  S = (lpeg.V"lvariable" + lpeg.V"lfunc" +  lcomment + linclude + (lpeg.V"lfunccall" * ws) +
+  lpeg.V"lclass")^1, 
 --lpeg.V"lcclass" + lpeg.V"ltrait" + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"ltablelookup"  + lpeg.V"lforloop"
 
   --DECLARATIONS

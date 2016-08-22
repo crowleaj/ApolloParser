@@ -9,7 +9,7 @@ sepNoNL = ((lpeg.P(" ") + "\r" + "\t")^1)
 sep = ((lpeg.P(" ") + "\r" + "\n" + "\t")^1)
 
 --KEYWORDS
-lkeywords = (lpeg.P"this" + "trait" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar" + "func" + "gfunc")
+lkeywords = (lpeg.P"this" + "trait" + "if" + "or" + "else" + "switch" + "case" + "default" + "for" + "in" + "class" + "cclass" + "var" + "gvar" + "func" + "gfunc") * sep
 
 --COMMENTS
 lcomment = (("--" * ((lpeg.P(1) - "\n")^0) * "\n" * ws) + ("/*" * ((lpeg.P(1)-"*/")^0) * "*/" * ws))/

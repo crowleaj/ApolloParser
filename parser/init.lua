@@ -21,6 +21,8 @@ require "preparser"
 require "utils"
 require "parser/typecheck"
 
+require "parser/newparser"
+--[[
 function parseLine(line, scope)
   local nTree = {}
   local type = line.type
@@ -50,18 +52,17 @@ function parseLine(line, scope)
   end
   return table.concat(nTree)
 end
-
+--]]
 --Each file will have functions, variables and body, last file will have main
 
 
-function parse(tree)
-  local global, files, main = preParse(tree)
+function parseFiles(tree)
+  --local global, files, main = preParse(tree)
   --print(inspect(global))
   local nTree = {"do\n"}
   local scope = {}
-
+--[[
   table.insert(nTree, parseClasses(global.classes, global.classtoplevel))
-
 
   for _,file in ipairs(files) do
     for _, func in pairs(file.functions) do
@@ -74,12 +75,22 @@ function parse(tree)
   end
   table.insert(nTree, parseFunction(main))
   table.insert(nTree, "main()")
+  --]]
+  local scope = {global = {variables = {}}}
+  for _, file in ipairs(tree) do
+    local err, parsed = parseFile(file, scope)
+      print(inspect(scope))
+    if err > 0 then
+      return err
+    end
+    table.insert(nTree, parsed)
+  end
   table.insert(nTree, "end")
-  return table.concat(nTree)
+  return 0, table.concat(nTree)
 end 
 
 function loadfile(file)
-  local f = io.open(file .. ".ns", "rb")
+  local f = io.open(file .. ".as", "rb")
   local script = f:read("*all")
   f:close()
   return script
@@ -93,8 +104,13 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  print(inspect(p))
-  p = parse(p)
+  --print(inspect(p))
+  local err
+  err, p = parseFiles(p)
+  if err > 0 then
+    print("Parser terminated unexpectedly")
+    return
+  end
   if output == true then
       print(p)
   end

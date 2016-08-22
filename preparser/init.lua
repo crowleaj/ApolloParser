@@ -27,22 +27,25 @@ function preParse(tree)
   local files = {}
   local main = nil
   for num,f in ipairs(tree) do
-    local file = {functions = {}, variables = {}}
+    local file = {functions = {}, variables = {}, globalfunctions = {}, globalvariables = {}}
     for _,line in ipairs(f) do
       local type = line.type
       if type == "declassignment" or type == "declaration" then
         if line.scope == "global" then
           table.insert(global.variables, line)
+          table.insert(file.globalvariables, line)
         else
           table.insert(file.variables, line)
         end
       elseif type == "function" then
         if line.name == "main" then
           if num == #tree then
+            file.main = line
             main = line
           end
         elseif line.scope == "global" then
           table.insert(global.functions, line)
+          table.insert(file.globalfunctions, line)
         else
           table.insert(file.functions, line)
         end
@@ -57,6 +60,8 @@ function preParse(tree)
   --Top level is needed for top-down parsing to ensure no nil references
   global.classtoplevel = preParseClasses(global.classes)
   preParseTraits(global.traits)
-
+  if main == nil then
+    print("ERROR: no main function found")
+  end
   return global, files, main
 end
