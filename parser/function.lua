@@ -21,16 +21,21 @@ function parseFunction(fcn, scope)
   end
   table.insert(assignment, fcn.name)
   table.insert(assignment, " = function")
-  table.insert(assignment, parseFunctionValues(fcn.params, scope))
+
+  --Parse and check header
+  local err, header = parseFunctionValues(fcn.params, scope)
+  table.insert(assignment, header)
 
   --Build body part of function
   local nTree = {}
   table.insert(nTree, table.concat(assignment))
-  local err, body = parseFunctionBody(fcn.body, scope)
+
+  --Parse and check body
+  local err1, body = parseFunctionBody(fcn.body, scope)
   if body ~= "" then
     table.insert(nTree, body)
   end
-  
+
   table.insert(nTree, "end")
 
   --If we see main, add a call to it to initiate the program
@@ -40,7 +45,7 @@ function parseFunction(fcn, scope)
 
   --Dereference func from the namespace since we are done with it
   scope.func = scope.func.func.func
-  return err, table.concat(nTree, "\n")
+  return err + err1, table.concat(nTree, "\n")
 end
 
 --[[
@@ -49,6 +54,7 @@ end
   a fresh scope to allow variables to be shadowed
   Returns:
     Concatenated table of parameters
+    Error code, 0 if successful
 --]]
 function parseFunctionValues(vals, scope)
   local nTree = {"("}
@@ -65,7 +71,9 @@ function parseFunctionValues(vals, scope)
 
   --Create fresh scope to allow shadowing of parameters
   scope.func = {variables = {}, func = scope.func}
-  return table.concat(nTree)
+
+  --Run checker to make sure parameters are valid
+  return checkFunctionParameters(vals, scope), table.concat(nTree)
 end
 
 function parseSignature(fcn)

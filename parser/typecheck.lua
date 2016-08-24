@@ -65,6 +65,8 @@ function checkFunction(body, returns, scope)
     return 0
 end
 
+
+
 --[[
     Gets the return types from the innermost function.
     Needed because func is treated as a new "scope" in the sense
@@ -84,6 +86,26 @@ end
 --Gets variable name in scope.  Parameter for contains function
 function getvarname(var)
     return var.name
+end
+
+--[[
+    Runs a validation check on function parameters to make sure 
+    variable names are not duplicated and types are valid
+    Returns:
+        Error code, 0 if successful
+--]]
+function checkFunctionParameters(params, scope)
+    for i, current in ipairs(params) do
+        --TODO: check if type is valid
+        for j=i+1,#params,1 do
+            if current.name == params[j].name then
+                print("ERROR: variable name " .. current.name .. " already defined in function parameters")
+                return 1
+            end
+        end
+    end
+
+    return 0
 end
 
 --[[
