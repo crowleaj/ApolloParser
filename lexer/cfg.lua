@@ -52,7 +52,7 @@ return lpeg.P{
   lquicktypes = lpeg.Ct(lvarnorm * ws * (("," * ws * lvarnorm * ws)^1) * lpeg.V"ltype" * ws)/quicktype,
 
   lfuncparam = (lvarnorm * ws * lpeg.V"ltype")/
-    function(var, type) return {name = var.val, ctype = type.ctype} end,
+    function(var, type) return {name = var.val, ctype = type} end,
 
   lfuncparams = lpeg.Ct("(" * ((ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam") * ws * 
     (("," * ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam"))^0))^-1) * ws * ")" )/functionparams,

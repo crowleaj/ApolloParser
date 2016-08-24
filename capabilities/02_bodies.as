@@ -6,11 +6,13 @@ No assignments, function calls
 gvar a int
 var b int
 
-gfunc add(){
+gfunc add(a number, b number) number {
+    var a number
 }
 
-func mult(){
+func mult(a number, b number){
 }
 
 func main(){
+    var x int
 }

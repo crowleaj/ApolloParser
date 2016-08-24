@@ -65,12 +65,20 @@ function checkFunction(body, returns, scope)
     return 0
 end
 
-function innermostFuncScope(scope)
+--[[
+    Gets the return types from the innermost function.
+    Needed because func is treated as a new "scope" in the sense
+    that variables undefined in current scope are free to be defined.
+    Parsing a function creates a scope with function parameters  and returns then defines a "clean" func scope
+    Returns:
+        Return types of innermost function
+--]]
+function getReturns(scope)
     local func = scope.func
-    while func.func ~= nil do
+    while func.returns == nil do
         func = func.func
     end
-    return func
+    return func.returns
 end
 
 --Gets variable name in scope.  Parameter for contains function
@@ -82,8 +90,7 @@ end
     Runs a validation check on a declaration to make sure the declaration is valid.
     Also updates the scope where the declaration occured
     Returns:
-        0 no ERROR
-        1 ERROR
+        Error code, 0 if successful
 --]]
 function checkDeclaration(line, scope)
     local name = line.name
@@ -107,7 +114,7 @@ function checkDeclaration(line, scope)
     else
         if scope.func ~= nil then
             --Variable already declared in function scope
-            if contains(scope.func.varaibles, name, getvarname) == true then
+            if contains(scope.func.variables, name, getvarname) == true then
                 print("ERROR: variable " .. name .. " already declared in scope")
                 return 1
             else

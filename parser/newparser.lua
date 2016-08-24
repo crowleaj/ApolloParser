@@ -1,3 +1,9 @@
+
+--[[
+    Parses a declaration.
+    Returns:
+        Parsed declaration
+]]
 function parseDeclaration(line)
     local tree = {}
     if line.scope == "local" then
@@ -9,13 +15,19 @@ function parseDeclaration(line)
     return table.concat(tree, " ")
 end
 
+--[[
+    Parses and validates a statement with respect to its current scope.
+    Returns:
+        Error code, 0 if successful
+        Parsed statement
+]]
 function parseLine(line, scope)
     local type = line.type
     if type == "declaration" then
         return checkDeclaration(line, scope), parseDeclaration(line)
     elseif type == "function" then
         --Functions checked as a declaration, functions are first class!
-        return checkDeclaration(line, scope), parseFunction(line)
+        return parseFunction(line, scope)
     elseif type == "comment" then
         return 0
     else
@@ -23,9 +35,21 @@ function parseLine(line, scope)
         return 1
     end
 end
+
+--[[
+    Parses and validates a file.
+    Returns:
+     Error code, 0 if successful
+     Parsed file       
+]]
 function parseFile(file, scope)
+    --Encapsulate file
     local tree = {"do"}
+
+    --Create scope for file
     scope.file = {variables = {}}
+
+    --Parse body
     for _, line in ipairs(file) do
         local err, parsed = parseLine(line, scope)
         if err > 0 then
@@ -34,6 +58,7 @@ function parseFile(file, scope)
             table.insert(tree, parsed)
         end
     end
+
     table.insert(tree, "end")
     return 0, table.concat(tree, "\n")
 end
