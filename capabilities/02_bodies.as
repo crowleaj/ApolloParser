@@ -6,8 +6,7 @@ No assignments, function calls
 gvar a int
 var b int
 
-gfunc add(a number, b number) number {
-    var a number
+gfunc add(a number, b number){
 }
 
 func mult(a number, b number){

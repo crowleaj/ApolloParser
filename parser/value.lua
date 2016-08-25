@@ -6,13 +6,13 @@
 
 function parseValues(vars, scope)
   local nTree = {}
-  table.insert(nTree, "(")
+  --table.insert(nTree, "(")
     local args = {}
     for _,v in ipairs(vars) do
     table.insert(args, parseValue(v, scope))
   end
   table.insert(nTree, table.concat(args,","))
-  table.insert(nTree, ")")
+  --table.insert(nTree, ")")
   return table.concat(nTree)
 end
 

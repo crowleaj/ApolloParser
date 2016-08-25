@@ -11,6 +11,7 @@
     Parsed function
 ]]
 function parseFunction(fcn, scope)
+  --TODO: add to file, global or function variable scope
   --Define a new func scope
   scope.func = {variables = {}, returns = fcn.returns, func = scope.func}
 
@@ -53,8 +54,8 @@ end
   Adds variables to func scope then creates
   a fresh scope to allow variables to be shadowed
   Returns:
-    Concatenated table of parameters
     Error code, 0 if successful
+    Concatenated table of parameters
 --]]
 function parseFunctionValues(vals, scope)
   local nTree = {"("}
@@ -85,6 +86,28 @@ function parseSignature(fcn)
 end
 
 --[[
+  Creates the return statement for a function.
+  Returns:
+    Error code, 0 if successful
+    Concatenated return statement
+--]]
+function parseReturn(line, scope)
+  local returns = getReturns(scope)
+  if #line.val < #returns then
+    --Default to 0 for primitives and null for objects
+    for i=#line.val,#returns do
+      --print(inspect(line))
+    end
+  elseif #line.val > #returns then
+    print("ERROR: number of returns exceeds function signature value of " .. #returns)
+    return 1
+  end
+  local nTree = {"return "}
+  table.insert(nTree, parseValues(line.val))
+  return 0, table.concat(nTree)
+end
+
+--[[
   Parses the body of the function and performs checking.
   Returns:
     Error code, 0 if successful
@@ -92,20 +115,25 @@ end
 --]]
 function parseFunctionBody(body, scope)
   local nTree = {}
-  for _,line in ipairs(body) do
+  local err = 0
+  for linenum,line in ipairs(body) do
     local type = line.type
-    --TODO: revisit return and make sure it is last statement
+    --TODO: check return
     if type == "return" then
-      table.insert(nTree, "return ")
-      table.insert(nTree, parseValue(line.val))
-      table.insert(nTree, "\n")
+      if linenum < #body then
+        print("ERROR: return statement not last in block")
+        return 1
+      end
+      local tree
+      err, tree = parseReturn(line, scope)
+      table.insert(nTree, tree)
     else
-      local err, val = parseLine(line, scope)
-      if err > 0 then
-        return err
+      local err1, val = parseLine(line, scope)
+      if err1 > 0 then
+        return err1
       end
       table.insert(nTree, val)
     end
   end
-  return 0, table.concat(nTree, "\n")
+  return err, table.concat(nTree, "\n")
 end

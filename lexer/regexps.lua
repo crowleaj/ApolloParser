@@ -62,7 +62,14 @@ lclasstype = lvarnorm/function(var) return {type = "class", name = var.val} end
 ltraittype = lvarnorm/function(var) return {type = "trait", name = var.val} end
 
 --ARITHMETIC OPERATORS
-arithOp = (lpeg.S("*/+-") + (lpeg.P"||"/" or ") + (lpeg.P"&&"/" and ") + lpeg.S("<>") + "<=" + ">=" + "==" + (lpeg.P"!="/"~="))/
+local function optype(type)
+  return {type = "operation", val = type}
+end
+local ladd = lpeg.P"+"/optype("+")
+local lsub = lpeg.P"-"/optype("-")
+local lmult = lpeg.P"*"/optype("*")
+local ldiv = lpeg.P"/"/optype("/")
+larithOp = (lpeg.S("*/+-") + (lpeg.P"||"/" or ") + (lpeg.P"&&"/" and ") + lpeg.S("<>") + "<=" + ">=" + "==" + (lpeg.P"!="/"~="))/
   function(operator) return {type = "operator", val = operator} end
 
 --INCLUDE

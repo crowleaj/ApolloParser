@@ -2,11 +2,11 @@
 local primitives = {bool = 1, char = 2, short = 3, int = 4, long = 5, float = 6, float64 = 7, number = 8, string = 0}
 
 function isPrimitive(type)
-    return (primitives[type] ~= nil)
+    return type.ctype == "flat" and (primitives[type] ~= nil)
 end
 
 local function precisionLoss(varname, vartype, valtype)
-    if primitives[vartype] < primitives[valtype] then
+    if primitives[valtype] ~= 8 and (primitives[vartype] < primitives[valtype]) then
         print("WARNING: Potential loss of precision converting assignment of " .. varname .. " from " .. valtype .. " to " .. vartype)
     end
 end

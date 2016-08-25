@@ -71,30 +71,30 @@ return lpeg.P{
     function(returns) returns = returns or {} returns.type = "params" return returns end,
 --((lpeg.Ct(sepNoNL * lval) + lpeg.V"ldeclparams")^-1)
 
+  --FUNCTION CALLING
+  lcommaseparatedvalues = ((
+      ((lpeg.V"larith" * ws * "," * ws)^0) *
+      lpeg.V"larith" * ws)^-1)/
+    function(...) local params = {...} if ... == "()" then params = {} end return {type = "params", val = params} end,
+
+  lfunccallparams = 
+    ("(" * ws * lpeg.V"lcommaseparatedvalues" * ")"),
+
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
   
-
-  lfuncvars = "(" * lvarnorm * ")",
+  --RETURN STATEMENT  
+  lreturnstatement = ("return" * ws * lpeg.V"lcommaseparatedvalues")/
+    function(vals) return {type = "return", val = vals.val} end,
   
-  lfunccallparams = 
-    ("(" * ws * 
-    ((
-      ((lpeg.V"larith" * ws * "," * ws)^0) *
-      lpeg.V"larith" * ws)^-1) *
-    ")")/
-    function(...) local params = {...} if ... == "()" then params = {} end return {type = "params", val = params} end,
-  
-  lreturnstatement = ("return" * ws * lpeg.V"larith" * ws)/
-    function(val) return {type = "return", val = val} end,
-  
+  --ARITHMETIC STATEMENTS
   larith = 
     ((
       (lpeg.V"lrhs") * 
       (
-        ((ws * arithOp * ws * lpeg.V"lrhs")
-        + (ws * arithOp * ws * lpeg.V"larithbal"))^0))/
-          function ( ... )
+        ((ws * larithOp * ws * lpeg.V"lrhs")
+        + (ws * larithOp * ws * lpeg.V"larithbal"))^0))/
+          function (...)
             return {type = "arithmetic", val = {...}}
           end
         )

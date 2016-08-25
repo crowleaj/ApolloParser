@@ -79,7 +79,7 @@ function parseFiles(tree)
   local scope = {global = {variables = {}}}
   for _, file in ipairs(tree) do
     local err, parsed = parseFile(file, scope)
-      print(inspect(scope))
+      --print(inspect(scope))
     if err > 0 then
       return err
     end

@@ -8,7 +8,7 @@ B = {
 }
 A.b()
 --]]
-runfile("capabilities/02_bodies",true)
+runfile("capabilities/03_calls",true)
 --runfile("../scripts/controller.ns",false)
 
 --print(m.x)
