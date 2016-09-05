@@ -67,8 +67,11 @@ local function optype(type)
 end
 local ladd = lpeg.P"+"/optype("+")
 local lsub = lpeg.P"-"/optype("-")
-local lmult = lpeg.P"*"/optype("*")
+laddsub = lpeg.Cs(ladd+lsub)
+local lmul = lpeg.P"*"/optype("*")
 local ldiv = lpeg.P"/"/optype("/")
+lmuldiv = lpeg.Cs(lmul + ldiv)
+local lor = lpeg.P"||"/optype("or")
 larithOp = (lpeg.S("*/+-") + (lpeg.P"||"/" or ") + (lpeg.P"&&"/" and ") + lpeg.S("<>") + "<=" + ">=" + "==" + (lpeg.P"!="/"~="))/
   function(operator) return {type = "operator", val = operator} end
 

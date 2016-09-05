@@ -67,6 +67,10 @@ end
 
 
 
+function checkArithmetic(rhs)
+
+end
+
 --[[
     Gets the return types from the innermost function.
     Needed because func is treated as a new "scope" in the sense

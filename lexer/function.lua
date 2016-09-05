@@ -33,3 +33,9 @@ function noreturnhandle(name, params, returns, body)
     returns = {}
     end
 return {type = "function", name = name.val, params = params, returns = returns, body = body} end
+
+function node(p)
+  return p / function(left, op, right)
+    return { type = "operation", operator = op, left = left, right = right }
+  end
+end

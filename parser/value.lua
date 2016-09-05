@@ -134,6 +134,8 @@ function parseValue(rhs, scope)
     table.insert(nTree, rhs.val)
     table.insert(nTree, parseValues(rhs.args))
     return table.concat(nTree)
+  elseif type == "operation" then
+    return parseValue(rhs.left, scope) .. rhs.operator .. parseValue(rhs.right, scope)
   else
     print("ERROR Processing value " .. type)
     return "ERR"

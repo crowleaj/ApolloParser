@@ -87,8 +87,13 @@ return lpeg.P{
   lreturnstatement = ("return" * ws * lpeg.V"lcommaseparatedvalues")/
     function(vals) return {type = "return", val = vals.val} end,
   
+  larith = lpeg.V("lexp"),
+  lexp = lpeg.V("lterm") + lpeg.V("lfactor") + lpeg.V"lrhs",
+  lterm = node((lpeg.V("lfactor") + lpeg.V"lrhs") * ws * laddsub * ws * lpeg.V("lexp")),
+  lfactor = node(lpeg.V"lrhs" * ws * lmuldiv * ws * (lpeg.V("lfactor") + lpeg.V"lrhs")),
+  --(+ (+ 1 2) 3  4)
   --ARITHMETIC STATEMENTS
-  larith = 
+  larithasd = 
     ((
       (lpeg.V"lrhs") * 
       (

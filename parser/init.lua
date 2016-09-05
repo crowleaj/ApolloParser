@@ -104,7 +104,7 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  --print(inspect(p))
+  print(inspect(p))
   local err
   err, p = parseFiles(p)
   if err > 0 then
