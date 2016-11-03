@@ -26,7 +26,7 @@ digit = "0" ... "9" .
 Comments
 
 There exist two forms of comments:
-    1. Line comments start with -- and end with a newline
+    1. Line comments start with // and end with a newline
     2. Block comments start with /* and end with */
 
 Identifiers
@@ -41,6 +41,22 @@ The following keywords are reserved and unavailable as identifiers.
 
 Operators and Delimeters
 
+The following operators are used with their respective precedence
+
+    (   )
+    ^
+    !   -
+    *   /   %
+    +   -
+    ==  !=  >=  <=
+    <<  >>
+    &
+    ^|
+    |
+    &&
+    ||
+
+
 Declarations
 
 Declarations are used to declare a variable ahead of time, state its scope and declare its type.
@@ -52,4 +68,12 @@ Assignments
 Assignments can be in the same statement as declarations or can be assigned after declaration.  
 Assignments of objects pass the reference whereas primitive assignments pass the value.
 
-assignment = identifier "=" (identifier + arithmetic) .
+assignment = ( identifier "=" ( identifier | arithmetic ) ) |
+             ( identifier function ) |
+             ( identifier identifier "=" "new" function ).
+
+Function Calls
+
+A Function is called with the following syntax.  The syntax allows for currying of functions.
+
+function = identifier { "(" [ arithmetic { "," arithmetic } ] ")" }^1 .

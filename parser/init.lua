@@ -87,7 +87,7 @@ function parseFiles(tree)
   end
   table.insert(nTree, "end")
   return 0, table.concat(nTree, "\n")
-end 
+end
 
 function loadfile(file)
   local f = io.open(file .. ".as", "rb")
@@ -104,7 +104,7 @@ function run(script,output)
   local p, classes = lex(script)
   --preparseClasses(classes)
   --print(inspect(classes))
-  print(inspect(p))
+  --print(inspect(p))
   local err
   err, p = parseFiles(p)
   if err > 0 then

@@ -1,4 +1,6 @@
 require "parser"
+print(-2^2)
+
 --[[
 A = {
   b = function() B.b() end

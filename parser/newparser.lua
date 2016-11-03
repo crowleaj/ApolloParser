@@ -9,7 +9,7 @@ function parseDeclaration(line)
     if line.scope == "local" then
         table.insert(tree, "local")
         table.insert(tree, line.name)
-    else 
+    else
         return
     end
     return table.concat(tree, " ")
@@ -25,6 +25,10 @@ function parseLine(line, scope)
     local type = line.type
     if type == "declaration" then
         return checkDeclaration(line, scope), parseDeclaration(line)
+    elseif type == "assignment" then
+        return checkAssignment(line, scope), parseAssignment(line, scope)
+    elseif type == "declassignment" then
+        return checkDeclaration(line, scope) + checkAssignment(line, scope), parseAssignment(line)
     elseif type == "function" then
         --Functions checked as a declaration, functions are first class!
         return parseFunction(line, scope)
@@ -40,7 +44,7 @@ end
     Parses and validates a file.
     Returns:
      Error code, 0 if successful
-     Parsed file       
+     Parsed file
 ]]
 function parseFile(file, scope)
     --Encapsulate file

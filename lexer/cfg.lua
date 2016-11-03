@@ -25,13 +25,13 @@ return lpeg.P{
   lclassvariable = (lpeg.V"lclassdeclassignment" + (lpeg.V"lclassdecl" * ws)),
 
   --ASSIGNMENTS and DECLARTIONS that involve ASSIGNMENTS
-  ldeclassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
+  ldeclassignment = (lpeg.V"ldecl" * (ws * ("=" * ws * lpeg.V"larith") + lpeg.V"ldeclparams") * ws)/
     function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
 
-  lclassdeclassignment = (lpeg.V"lclassdecl" * (ws * ("=" * ws * lval) + lpeg.V"ldeclparams") * ws)/
+  lclassdeclassignment = (lpeg.V"lclassdecl" * (ws * ("=" * ws * lpeg.V"larith") + lpeg.V"ldeclparams") * ws)/
     function(declaration, assignment) declaration.type = "declassignment" declaration.val = assignment return declaration  end,
   --TODO: Support arithmetic expressions
-  lassignment = (lvar * ws * "=" * ws * lval)/
+  lassignment = (lvar * ws * "=" * ws * lpeg.V"larith")/
     function(var, val) return {type = "assignment", annotation = var.annotation, name = var.val, val = val} end,
 
   --VARIABLE TYPES
@@ -86,14 +86,27 @@ return lpeg.P{
   --RETURN STATEMENT  
   lreturnstatement = ("return" * ws * lpeg.V"lcommaseparatedvalues")/
     function(vals) return {type = "return", val = vals.val} end,
-  
-  larith = lpeg.V("lexp"),
-  lexp = lpeg.V("lterm") + lpeg.V("lfactor") + lpeg.V"lrhs",
-  lterm = node((lpeg.V("lfactor") + lpeg.V"lrhs") * ws * laddsub * ws * lpeg.V("lexp")),
-  lfactor = node(lpeg.V"lrhs" * ws * lmuldiv * ws * (lpeg.V("lfactor") + lpeg.V"lrhs")),
+  lparens = ("(" * ws * lpeg.V"larith" * ws * ")")/
+    function(val) return {type = "parentheses", val = val} end,
+  larith = (ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws * (loperation * ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws)^0)/
+    function(...) return {type = "arithmetic", val = {...}} end,
+  --lexp = lpeg.V"lfacor" * ws, --+ lpeg.V"lfacand" + lpeg.V"lfacequality" + lpeg.V("lterm") + lpeg.V("lfactor") + lpeg.V"lfacnotnegate" + lpeg.V"lfacpower" + lpeg.V"lrhs",
+  -- lfacor = node(lpeg.V"lfacand" * ws * lor * ws * lpeg.V"lfacor") + lpeg.V"lfacand",
+  -- lfacand = node(lpeg.V"lfacbitor" * ws * land * ws * lpeg.V"lfacand") + lpeg.V"lfacbitor",
+  -- lfacbitor =  node(lpeg.V"lfacbitxor" * ws * lbitor * ws * lpeg.V"lfacbitor") + lpeg.V"lfacbitxor",
+  -- lfacbitxor =  node(lpeg.V"lfacbitand" * ws * lbitxor * ws * lpeg.V"lfacbitxor") + lpeg.V"lfacbitand",
+  -- lfacbitand =  node(lpeg.V"lfacequality" * ws * lbitand * ws * lpeg.V"lfacbitand") + lpeg.V"lfacequality",
+  -- lfacequality = node(lpeg.V"lfacbitshift" * ws * lequality * ws * lpeg.V"lfacequality") + lpeg.V"lfacbitshift",
+  -- lfacbitshift = node(lpeg.V"lfacadd" * ws * lbitshift * ws * lpeg.V"lfacbitshift") + lpeg.V"lfacadd",
+  -- lfacadd =  node(lpeg.V"lfacmult" * ws * laddsub * ws * lpeg.V"lfacadd") + lpeg.V"lfacmult",
+  -- lfacmult = node(lpeg.V"lfacnotnegate" * ws * lmuldiv * ws * lpeg.V"lfacmult") + lpeg.V"lfacnotnegate",
+  -- lfacnotnegate = (lnotneg * ws * lpeg.V"lfacpower")/function(op, rhs) return { type = "operation", operator = op, right = rhs } end + lpeg.V"lfacpower",
+  -- lfacpower = node(lpeg.V"lfaccast" * ws * lpower * ws * lpeg.V"lfacpower") + lpeg.V"lfaccast",
+  -- lfaccast = lpeg.V"lexp" + ("(" * ws * lpeg.V"ltype" * ws * ")" * ws * lpeg.V"lexp"),
+  -- lexp = lval + ("(" * ws * lpeg.V"lfacor" * ws * ")")/function(exp) return { type = "operation", operator = "parens", right = exp } end,
   --(+ (+ 1 2) 3  4)
   --ARITHMETIC STATEMENTS
-  larithasd = 
+ --[[ larithasd = 
     ((
       (lpeg.V"lrhs") * 
       (
@@ -104,9 +117,9 @@ return lpeg.P{
           end
         )
     + lpeg.V"larithbal",
-
-  larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal" + lnumval) * ws * ")" * ws)/
-    function(val) return {type = "parentheses", val = val} end,
+--]]
+  --larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal" + lnumval) * ws * ")" * ws)/
+  --  function(val) return {type = "parentheses", val = val} end,
     
   lbody = lpeg.Ct(
     "{" * ws *  

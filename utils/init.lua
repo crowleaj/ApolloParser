@@ -6,7 +6,7 @@
 
 inspect = require "utils/inspect"
 require "utils/queue"
-
+require "utils/tokenizer"
 local function ident(item)
     return item
 end

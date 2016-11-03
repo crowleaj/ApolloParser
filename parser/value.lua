@@ -31,7 +31,7 @@ function parseDeclaration(val)
   if val.type == "declassignment" then
     local type = val.ctype.ctype
      if isPrimitive(type) then
-      table.insert(nTree, parseValue(val.val))    
+      table.insert(nTree, parseValue(val.val))
      else
       table.insert(nTree, type)
       table.insert(nTree, ".new")
@@ -40,7 +40,7 @@ function parseDeclaration(val)
         table.insert(nTree,parseValue(arg, scope))
         table.insert(nTree,",")
       end
-      if #val.val >0 then 
+      if #val.val >0 then
         table.remove(nTree)
       end
       table.insert(nTree,")")
@@ -55,7 +55,9 @@ end
 function parseValue(rhs, scope)
   local type = rhs.type
   --print(type)
-  if type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
+  if type == "arithmetic" then
+      return parseArithmetic(parseArithmeticTree(Tokenizer.new(rhs.val),1))
+elseif type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
     if rhs.annotation ~= nil then
       return rhs.annotation .. "." .. rhs.val
     end
@@ -108,7 +110,7 @@ function parseValue(rhs, scope)
         table.insert(nTree,parseValue(arg, scope))
         table.insert(nTree,",")
       end
-      if #val.val >0 then 
+      if #val.val >0 then
         table.remove(nTree)
       end
       table.insert(nTree,")")
