@@ -1,3 +1,8 @@
+--Created by Alex Crowley
+--On November 2, 2016
+--Copyright (c) 2016, TBD
+--Licensed under the MIT license
+--See LICENSE file for terms
 
 --[[
   Used to iterate through tokens in a syntax tree.  Primarily used by precedent parser.

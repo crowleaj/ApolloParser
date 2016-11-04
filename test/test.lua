@@ -1,5 +1,4 @@
 require "parser"
-print(-2^2)
 
 --[[
 A = {

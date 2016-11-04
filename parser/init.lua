@@ -6,20 +6,21 @@
 
 require "lexer"
 
+require "parser/arithmetic"
 require "parser/value"
 require "parser/assignment"
 require "parser/function"
 require "parser/ifblock"
 require "parser/for"
 require "parser/switch"
-require "parser/class"
+--require "parser/class"
 
-require "classann"
+--require "classann"
 
 require "preparser"
 
 require "utils"
-require "parser/typecheck"
+require "typecheck"
 
 require "parser/newparser"
 --[[

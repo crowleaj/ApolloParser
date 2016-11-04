@@ -4,12 +4,14 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
---TODO: fix tablelookup grammar to reject all grammars that don't end in function call or catch error in parser
+--[[
+  Context free grammar for Apollo.  Builds a parse tree of the result.
+--]]
 return lpeg.P{
   "S",
 
   S = (lpeg.V"lvariable" + lpeg.V"lfunc" +  lcomment + linclude + (lpeg.V"lfunccall" * ws) +
-  lpeg.V"lclass")^1, 
+  lpeg.V"lclass")^1,
 --lpeg.V"lcclass" + lpeg.V"ltrait" + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"ltablelookup"  + lpeg.V"lforloop"
 
   --DECLARATIONS
@@ -37,12 +39,12 @@ return lpeg.P{
   --VARIABLE TYPES
   lfuncptrparams = lpeg.Ct("(" * ws * ((lpeg.V"ltype" * ws * (("," * ws * lpeg.V"ltype")^0))^-1) * ws * ")" )/
   function(returns) return returns or {} end,
-  
+
   lfuncptr = ("func" * lpeg.V"lfuncptrparams" * ws * lpeg.V"lfuncreturns")/
     function(params, returns)
       return {type = "function", params = params, returns = returns or {}}
     end,
-  
+
   ltype = lpeg.V"lfuncptr" + lvartype,
 
 
@@ -54,13 +56,13 @@ return lpeg.P{
   lfuncparam = (lvarnorm * ws * lpeg.V"ltype")/
     function(var, type) return {name = var.val, ctype = type} end,
 
-  lfuncparams = lpeg.Ct("(" * ((ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam") * ws * 
+  lfuncparams = lpeg.Ct("(" * ((ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam") * ws *
     (("," * ws * (lpeg.V"lquicktypes" + lpeg.V"lfuncparam"))^0))^-1) * ws * ")" )/functionparams,
 
   lfuncreturns = (((lpeg.Ct(lpeg.V"ltype") + (lpeg.V"lfuncptrparams")))^-1),
 
   lfunc = (lpeg.Cs((lpeg.P"func"/"local") + (lpeg.P"gfunc"/"global")) * sepNoNL * lpeg.V"lclassfunc")/
-    function(scope, func) 
+    function(scope, func)
       func.scope = scope
       return func end,
 
@@ -77,56 +79,26 @@ return lpeg.P{
       lpeg.V"larith" * ws)^-1)/
     function(...) local params = {...} if ... == "()" then params = {} end return {type = "params", val = params} end,
 
-  lfunccallparams = 
+  lfunccallparams =
     ("(" * ws * lpeg.V"lcommaseparatedvalues" * ")"),
 
   lfunccall = ( lvar * ((lpeg.V"lfunccallparams")^1) * ws)/
     function(func, ...) return {type = "functioncall", name = func, args = {...}} end,
-  
-  --RETURN STATEMENT  
+
+  --RETURN STATEMENT
   lreturnstatement = ("return" * ws * lpeg.V"lcommaseparatedvalues")/
     function(vals) return {type = "return", val = vals.val} end,
   lparens = ("(" * ws * lpeg.V"larith" * ws * ")")/
     function(val) return {type = "parentheses", val = val} end,
   larith = (ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws * (loperation * ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws)^0)/
     function(...) return {type = "arithmetic", val = {...}} end,
-  --lexp = lpeg.V"lfacor" * ws, --+ lpeg.V"lfacand" + lpeg.V"lfacequality" + lpeg.V("lterm") + lpeg.V("lfactor") + lpeg.V"lfacnotnegate" + lpeg.V"lfacpower" + lpeg.V"lrhs",
-  -- lfacor = node(lpeg.V"lfacand" * ws * lor * ws * lpeg.V"lfacor") + lpeg.V"lfacand",
-  -- lfacand = node(lpeg.V"lfacbitor" * ws * land * ws * lpeg.V"lfacand") + lpeg.V"lfacbitor",
-  -- lfacbitor =  node(lpeg.V"lfacbitxor" * ws * lbitor * ws * lpeg.V"lfacbitor") + lpeg.V"lfacbitxor",
-  -- lfacbitxor =  node(lpeg.V"lfacbitand" * ws * lbitxor * ws * lpeg.V"lfacbitxor") + lpeg.V"lfacbitand",
-  -- lfacbitand =  node(lpeg.V"lfacequality" * ws * lbitand * ws * lpeg.V"lfacbitand") + lpeg.V"lfacequality",
-  -- lfacequality = node(lpeg.V"lfacbitshift" * ws * lequality * ws * lpeg.V"lfacequality") + lpeg.V"lfacbitshift",
-  -- lfacbitshift = node(lpeg.V"lfacadd" * ws * lbitshift * ws * lpeg.V"lfacbitshift") + lpeg.V"lfacadd",
-  -- lfacadd =  node(lpeg.V"lfacmult" * ws * laddsub * ws * lpeg.V"lfacadd") + lpeg.V"lfacmult",
-  -- lfacmult = node(lpeg.V"lfacnotnegate" * ws * lmuldiv * ws * lpeg.V"lfacmult") + lpeg.V"lfacnotnegate",
-  -- lfacnotnegate = (lnotneg * ws * lpeg.V"lfacpower")/function(op, rhs) return { type = "operation", operator = op, right = rhs } end + lpeg.V"lfacpower",
-  -- lfacpower = node(lpeg.V"lfaccast" * ws * lpower * ws * lpeg.V"lfacpower") + lpeg.V"lfaccast",
-  -- lfaccast = lpeg.V"lexp" + ("(" * ws * lpeg.V"ltype" * ws * ")" * ws * lpeg.V"lexp"),
-  -- lexp = lval + ("(" * ws * lpeg.V"lfacor" * ws * ")")/function(exp) return { type = "operation", operator = "parens", right = exp } end,
-  --(+ (+ 1 2) 3  4)
-  --ARITHMETIC STATEMENTS
- --[[ larithasd = 
-    ((
-      (lpeg.V"lrhs") * 
-      (
-        ((ws * larithOp * ws * lpeg.V"lrhs")
-        + (ws * larithOp * ws * lpeg.V"larithbal"))^0))/
-          function (...)
-            return {type = "arithmetic", val = {...}}
-          end
-        )
-    + lpeg.V"larithbal",
---]]
-  --larithbal = (ws * "(" * ws * (lpeg.V"larith" + lpeg.V"larithbal" + lnumval) * ws * ")" * ws)/
-  --  function(val) return {type = "parentheses", val = val} end,
-    
+
   lbody = lpeg.Ct(
-    "{" * ws *  
-    (((lpeg.V"S" + lpeg.V"lassignment") * ws)^0) * ws * 
+    "{" * ws *
+    (((lpeg.V"S" + lpeg.V"lassignment") * ws)^0) * ws *
     (lpeg.V"lreturnstatement"^-1) *
     lpeg.P"}" * ws),
-    
+
   lclass = ("class" * ws * lvarnorm * ws * (("of" * ws * (lclasstype * ws))^-1) * (("with" * ws *(((ltraittype * ws * ","* ws)^0) * ltraittype * ws))^-1) * lpeg.V"lclassbody")/
     function(name, ...)   return {type = "class", name = name.val, val = {...}} end,
 
@@ -142,7 +114,7 @@ return lpeg.P{
 
   lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
     function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
-  
+
   lrhs = (lpeg.V"lclassreference"  + lpeg.V"lfunccall" + lval),
   --+ lpeg.V"ltablelookup"
 }

@@ -17,16 +17,16 @@ lcomment = (("//" * ((lpeg.P(1) - "\n")^0) * "\n" * ws) + ("/*" * ((lpeg.P(1)-"*
 
 --CONSTANTS
 linteger = ((lpeg.P"-"^-1) * (lpeg.R("09")^1))/
-  function(val) return {type = "constant", ctype = "char", val = val} end
+  function(val) return {type = "constant", ctype = {type="flat", ctype="int"}, val = val} end
 
 lfloat = ((lpeg.P"-"^-1) * (((lpeg.R("09")^1) * ("." * (lpeg.R("09")^0))) + ((lpeg.R("09")^0) * ("." * (lpeg.R("09")^1)))))/
-  function(val) return {type = "constant", ctype = "float64", val = val} end
+  function(val) return {type = "constant", ctype = {type="flat", ctype="float64"}, val = val} end
 
 lnum = lfloat + linteger
 
 lstring = (("'" * (((lpeg.P(1)-"'")^0)/function(string) return string end) * "'") +
   ('"' * (((lpeg.P(1)-'"')^0)/function(string) return string end) * '"'))/
-  function(string) return {type = "constant", ctype = "string", val = string}  end
+  function(string) return {type = "constant", ctype = {type="flat", ctype="string"}, val = string}  end
 
 lconst = (lnum + lstring)
 
