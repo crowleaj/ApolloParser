@@ -60,7 +60,7 @@ end
 function parseFiles(tree)
   --local global, files, main = preParse(tree)
   --print(inspect(global))
-  local nTree = {"do"}
+  local nTree = {"do\nlocal __bit = require(\"bit\")"}
   local scope = {}
 --[[
   table.insert(nTree, parseClasses(global.classes, global.classtoplevel))

@@ -4,6 +4,23 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
+function parseArithmetic(rhs)
+  local type = rhs.type
+  if type == "parentheses" then
+    return "(" .. parseArithmetic(rhs.val) .. ")"
+  elseif type == "constant" or type == "variable" then
+    return rhs.val
+  else
+    if rhs.precedence < 7 or rhs.precedence == 11 then
+        return rhs.op .. "(" .. parseArithmetic(rhs.lhs) .. ", "  .. parseArithmetic(rhs.rhs) .. ")"
+    elseif rhs.precedence == 10 then
+      return rhs.op .. parseArithmetic(rhs.lhs)
+    else
+      return parseArithmetic(rhs.lhs) .. rhs.op .. parseArithmetic(rhs.rhs)
+    end
+  end
+end
+
 function parseAtom(tokens)
   local current = Tokenizer.current(tokens)
   if current.type == "parentheses" then

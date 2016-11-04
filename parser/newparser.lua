@@ -1,3 +1,8 @@
+--Created by Alex Crowley
+--On November 3, 2016
+--Copyright (c) 2016, TBD
+--Licensed under the MIT license
+--See LICENSE file for terms
 
 --[[
     Parses a declaration.
@@ -49,7 +54,6 @@ end
 function parseFile(file, scope)
     --Encapsulate file
     local tree = {"do"}
-
     --Create scope for file
     scope.file = {variables = {}}
 

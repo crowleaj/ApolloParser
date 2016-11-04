@@ -3,22 +3,6 @@
 --Copyright (c) 2016, TBD
 --Licensed under the MIT license
 --See LICENSE file for terms
-function parseArithmetic(rhs)
-  local type = rhs.type
-  if type == "parentheses" then
-    return "(" .. parseArithmetic(rhs.val) .. ")"
-  elseif type == "constant" or type == "variable" then
-    return rhs.val
-  else
-    if rhs.precedence < 7 or rhs.precedence == 11 then
-        return rhs.op .. "(" .. parseArithmetic(rhs.lhs) .. ", "  .. parseArithmetic(rhs.rhs) .. ")"
-    elseif rhs.precedence == 10 then
-      return rhs.op .. parseArithmetic(rhs.lhs)
-    else
-      return parseArithmetic(rhs.lhs) .. rhs.op .. parseArithmetic(rhs.rhs)
-    end
-  end
-end
 
 function parseAssignment(line)
   local var = line.name--parseValue(line.var)
@@ -48,6 +32,5 @@ function parseAssignment(line)
   else
     print("ERROR: Invalid declaration type")
   end
-  table.insert(nTree, "\n")
   return table.concat(nTree)
 end

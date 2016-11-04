@@ -12,16 +12,21 @@
 ]]
 function parseFunction(fcn, scope)
   --TODO: add to file, global or function variable scope
-  --Define a new func scope
-  scope.func = {variables = {}, returns = fcn.returns, func = scope.func}
 
   --Build header part of function
   local assignment = {}
   if fcn.scope == "local" then
     table.insert(assignment, "local ")
+  elseif scope.func ~= nil then
+      print("ERROR: nested function declared with global scope")
+      return 1
   end
   table.insert(assignment, fcn.name)
   table.insert(assignment, " = function")
+  --Define a new func scope
+  scope.func = {variables = {}, returns = fcn.returns, func = scope.func}
+
+
 
   --Parse and check header
   local err, header = parseFunctionValues(fcn.params, scope)
