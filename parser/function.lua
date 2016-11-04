@@ -16,15 +16,31 @@ function parseFunction(fcn, scope)
   --Build header part of function
   local assignment = {}
   if fcn.scope == "local" then
+    if scope.func ~= nil then
+      scope.func.variables[fcn.name] = {type = "function", params = {}, returns = fcn.returns}
+      for _, val in ipairs(fcn.params) do
+        table.insert(scope.func.variables[fcn.name].params, val)
+      end
+    else
+      scope.file.variables[fcn.name] = {type = "function", params = {}, returns = fcn.returns}
+      for _, val in ipairs(fcn.params) do
+        table.insert(scope.file.variables[fcn.name].params, val)
+      end
+    end
     table.insert(assignment, "local ")
   elseif scope.func ~= nil then
       print("ERROR: nested function declared with global scope")
       return 1
+  else
+    scope.global.variables[fcn.name] = {type = "function", params = {}, returns = fcn.returns}
+    for _, val in ipairs(fcn.params) do
+      table.insert(scope.global.variables[fcn.name].params, val)
+    end
   end
   table.insert(assignment, fcn.name)
   table.insert(assignment, " = function")
   --Define a new func scope
-  scope.func = {variables = {}, returns = fcn.returns, func = scope.func}
+  scope.func = {variables = {}, name = fcn.name, params = {}, returns = fcn.returns, func = scope.func}
 
 
 
@@ -106,6 +122,20 @@ function parseReturn(line, scope)
   elseif #line.val > #returns then
     print("ERROR: number of returns exceeds function signature value of " .. #returns)
     return 1
+  end
+  for i, ret in ipairs(line.val) do
+    ret.val = parseArithmeticTree(Tokenizer.new(ret.val),1)
+    local type, err = validateArithmetic(ret.val, scope)
+    local _, typeErr = compareTypes(returns[i], type)
+    if err + typeErr > 0 then
+      return 1
+    end
+    v1, v2 = isPrimitive(returns[i]), isPrimitive(type)
+    if v1 and v2 then
+      if v1 < v2 then
+        print("WARNING: Potential loss of precision converting return value " .. i .. " in function " .. scope.func.func.name .. " from " .. type.ctype .. " to " .. returns[i].ctype)
+      end
+    end
   end
   local nTree = {"return "}
   table.insert(nTree, parseValues(line.val))

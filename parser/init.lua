@@ -119,6 +119,8 @@ function run(script,output)
   if chunk == nil then
     print(err)
   else
+    io.write "\n"
+    print("Output:")
     chunk()
     io.write "\n"
   end

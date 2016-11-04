@@ -37,6 +37,14 @@ function parseLine(line, scope)
     elseif type == "function" then
         --Functions checked as a declaration, functions are first class!
         return parseFunction(line, scope)
+    elseif type == "lfunction" then
+        scope.global.variables[line.name] = {type = "function", params = {}, returns = line.returns}
+          for _, val in ipairs(line.params) do
+            table.insert(scope.global.variables[line.name].params, val)
+          end
+        return 0
+    elseif type == "functioncall" then
+      return checkFunctionCall(line, scope), parseValue(line)
     elseif type == "comment" then
         return 0
     else

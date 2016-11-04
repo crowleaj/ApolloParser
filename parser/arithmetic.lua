@@ -9,7 +9,7 @@ function parseArithmetic(rhs)
   if type == "parentheses" then
     return "(" .. parseArithmetic(rhs.val) .. ")"
   elseif type == "constant" or type == "variable" then
-    return rhs.val
+    return parseValue(rhs)
   else
     if rhs.precedence < 7 or rhs.precedence == 11 then
         return rhs.op .. "(" .. parseArithmetic(rhs.lhs) .. ", "  .. parseArithmetic(rhs.rhs) .. ")"
@@ -28,6 +28,7 @@ function parseAtom(tokens)
     Tokenizer.next(tokens)
     return current
   elseif current.type == "operation" then
+    --Unary operator
     if current.precedence == 10 then
       Tokenizer.next(tokens)
       --We need to give precedence to the exponentiation operator

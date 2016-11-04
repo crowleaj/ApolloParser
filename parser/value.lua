@@ -56,14 +56,14 @@ function parseValue(rhs, scope)
   local type = rhs.type
   --print(type)
   if type == "arithmetic" then
-      return parseArithmetic(parseArithmeticTree(Tokenizer.new(rhs.val),1))
-elseif type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
+      return parseArithmetic(rhs.val)
+  elseif type == "variable" or type == "classvariable" or type == "numberconst" or type == "operator" then
     if rhs.annotation ~= nil then
       return rhs.annotation .. "." .. rhs.val
     end
     return rhs.val
   elseif type == "constant" then
-    if rhs.ctype == "string" then
+    if rhs.ctype.ctype == "string" then
       return "'" .. rhs.val .. "'"
     else
       return rhs.val
