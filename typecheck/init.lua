@@ -10,16 +10,16 @@ require "typecheck/declaration"
 require "typecheck/function"
 require "typecheck/scope"
 
-local primitives = {bool = 1, char = 2, short = 3, int = 4, long = 5, float = 6, float64 = 7, number = 8, string = 0}
+local primitives = {bool = 1, char = 2, short = 3, int = 4, long = 5, float = 6, float64 = 7, number = 8, string = -1}
 --local reversePrim = {bool, char, short, int, long, float, float64, number, string}
 function isPrimitive(type)
   if type.type == "flat" then
     return primitives[type.ctype]
   end
-  return false
+  return 0
 end
 
-local function precisionLoss(varname, vartype, valtype)
+function precisionLoss(varname, vartype, valtype)
     if primitives[valtype] ~= 8 and (primitives[vartype] < primitives[valtype]) then
         print("WARNING: Potential loss of precision converting assignment of " .. varname .. " from " .. valtype .. " to " .. vartype)
     end

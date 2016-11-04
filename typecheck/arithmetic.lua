@@ -17,7 +17,15 @@ function validateArithmetic(exp)
     if prec == 10 then
       return validateArithmetic(exp.lhs)
     else
-      return compareTypes(validateArithmetic(exp.lhs), validateArithmetic(exp.rhs))
+      local t1, e1 = validateArithmetic(exp.lhs)
+      if e1 > 0 then
+        return nil, err
+      end
+      local t2, e2 = validateArithmetic(exp.rhs)
+      if e2 > 0 then
+        return nil, err
+      end
+      return compareTypes(t1, t2)
     end
   end
 end
