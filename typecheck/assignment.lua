@@ -12,7 +12,7 @@ function checkAssignment(line, scope)
   end
   --Build the parse tree since we're not allowed left-recursive grammars
   line.val = parseArithmeticTree(Tokenizer.new(line.val.val), 1)
-  local type, err = validateArithmetic(line.val)
+  local type, err = validateArithmetic(line.val, scope)
   if err > 0 then
     return err
   end
@@ -23,7 +23,7 @@ function checkAssignment(line, scope)
   v1, v2 = isPrimitive(var), isPrimitive(type)
   if v1 and v2 then
     if v1 < v2 then
-      print("WARNING: Potential loss of precision converting assignment of " .. line.name .. " from " .. var.ctype .. " to " .. type.ctype)
+      print("WARNING: Potential loss of precision converting assignment of " .. line.name .. " from " .. type.ctype .. " to " .. var.ctype)
     end
   end
   return 0

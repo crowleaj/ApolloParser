@@ -1,7 +1,7 @@
 /*
 A language simply with support of file and global scopes,
-variable and function declarations, function bodies and function calls
-No assignments
+variable and function declarations, function bodies, arithmetic and assignments 
+No function calls
 */
 gvar a int
 var b int
@@ -17,7 +17,8 @@ func main(){
     //func inner(){
     //}
     //add(5, 6)
-    var x char = -2^4^-(5*4)//3 * -b//(6 + 5 )
+    var x int = 5
+    var y char = -2^4^-(x*4)//3 * -b//(6 + 5 )
     //a*!(b/c)
     //a|| b||c||d  
     //5||6^|(7*8||9)&&10
