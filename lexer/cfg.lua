@@ -10,7 +10,7 @@
 return lpeg.P{
   "S",
 
-  S = (lpeg.V"lvariable" + lpeg.V"lfunc" +  lcomment + linclude + (lpeg.V"lfunccall" * ws) +
+  S = (lpeg.V"lvariable" + lpeg.V"lfunc" + lpeg.V"lluafunc" +  lcomment + linclude + (lpeg.V"lfunccall" * ws) +
   lpeg.V"lclass")^1,
 --lpeg.V"lcclass" + lpeg.V"ltrait" + lpeg.V"lif" + lpeg.V"lswitch" + lpeg.V"ltablelookup"  + lpeg.V"lforloop"
 
@@ -65,6 +65,10 @@ return lpeg.P{
     function(scope, func)
       func.scope = scope
       return func end,
+  lluafunc = (lpeg.P"lfunc" * sepNoNL * lvarnorm * ws * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns" * ws)/
+  function(name, params, returns)
+    return {type = "lfunction", name = name.val, params = params, returns = returns}
+  end,
 
   lclassfunc = (lvarnorm * lpeg.V"lfuncparams" * ws * lpeg.V"lfuncreturns" * ws * lpeg.V"lbody")/
     noreturnhandle,

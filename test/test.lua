@@ -1,5 +1,8 @@
 require "parser"
 
+
+runfile("capabilities/03_calls",true)
+
 --[[
 A = {
   b = function() B.b() end
@@ -9,7 +12,6 @@ B = {
 }
 A.b()
 --]]
-runfile("capabilities/03_calls",true)
 --runfile("../scripts/controller.ns",false)
 
 --print(m.x)

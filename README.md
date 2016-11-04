@@ -1,6 +1,25 @@
 # ApolloParser
 Parser for the Nitro programming language implemented in Lua
 
+## Running the Parser (ZeroBrane studio recommended)
+
+1. Set directory to project directory
+2. Run test/test.lua
+  - To change file to run, edit the path in runfile function call without adding the file extension.
+
+## Current Support
+- Declarations
+- Assignments
+- Function definitions (local and global)
+- Arithmetic
+- Function calls, not as assignment or in arithmetic
+- Includes
+
+## Language Roadmap
+- Function assignments
+- Function in arithmetic
+- Array and Map support
+
 Lexer:
 
 The lexer uses the provided grammar and capture rules in lexer.lua to create an AST of the language.

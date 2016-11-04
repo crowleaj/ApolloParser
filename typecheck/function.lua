@@ -22,3 +22,31 @@ function checkFunctionParameters(params, scope)
     end
     return 0
 end
+
+function checkFunctionCall(line, scope)
+  local fcn = resolveVariable(line.name.val, scope)
+  if fcn == nil then
+    print("ERROR: undefined function " .. line.name.val)
+    return 1
+  end
+  --TODO: Add in currying
+  if #fcn.params ~= #line.args[1].val then
+    print("ERROR: invalid number of parameters passed to function " .. line.name.val .. ", " .. #fcn.params .. "expected")
+    return 1
+  end
+  for i, param in ipairs(line.args[1].val) do
+    param.val = parseArithmeticTree(Tokenizer.new(param.val),1)
+    local type, err = validateArithmetic(param.val, scope)
+    local _, typeErr = compareTypes(fcn.params[i].ctype, type)
+    if err + typeErr > 0 then
+      return 1
+    end
+    v1, v2 = isPrimitive(fcn.params[i].ctype), isPrimitive(type)
+    if v1 and v2 then
+      if v1 < v2 then
+        print("WARNING: Potential loss of precision converting return value " .. i .. " in function " .. scope.func.func.name .. " from " .. type.ctype .. " to " .. returns[i].ctype)
+      end
+    end
+  end
+  return 0
+end
