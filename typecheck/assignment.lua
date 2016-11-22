@@ -11,7 +11,10 @@ function checkAssignment(line, scope)
     return 1
   end
   --Build the parse tree since we're not allowed left-recursive grammars
-  line.val = parseArithmeticTree(Tokenizer.new(line.val.val), 1)
+  line.val, err = parseArithmeticTree(Tokenizer.new(line.val.val), 1)
+  if err > 0 then
+    return err
+  end
   local type, err = validateArithmetic(line.val, scope)
   if err > 0 then
     return err

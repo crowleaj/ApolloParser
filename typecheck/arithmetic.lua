@@ -5,6 +5,7 @@
 --See LICENSE file for terms
 
 function validateArithmetic(exp, scope)
+  --print(inspect(exp))
   local type = exp.type
   if type == "parentheses" then
     return validateArithmetic(exp.val, scope)
@@ -17,6 +18,13 @@ function validateArithmetic(exp, scope)
     return var, 0
   elseif type == "constant" then
     return exp.ctype, 0
+  elseif type == "functioncall" then
+    local fcn = resolveVariable(exp.name.val, scope)
+    if fcn == nil then
+      print("ERROR: undefined function " .. exp.name.val .. " in arithmetic expression")
+      return nil, 1
+    end
+    return fcn.returns[1], validateFunctionCall(exp, scope)
   else
     local prec = exp.precedence
     if prec == 10 then

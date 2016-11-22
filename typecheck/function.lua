@@ -24,6 +24,14 @@ function checkFunctionParameters(params, scope)
 end
 
 function checkFunctionCall(line, scope)
+  local call, err = parseFunctionCallTree(line)
+  if err > 0 then
+    return err
+  end
+  return validateFunctionCall(line, scope)
+end
+
+function validateFunctionCall(line, scope)
   local fcn = resolveVariable(line.name.val, scope)
   if fcn == nil then
     print("ERROR: undefined function " .. line.name.val)
@@ -35,10 +43,13 @@ function checkFunctionCall(line, scope)
     return 1
   end
   for i, param in ipairs(line.args[1].val) do
-    param.val = parseArithmeticTree(Tokenizer.new(param.val),1)
+    --param.val = parseArithmeticTree(Tokenizer.new(param.val),1)
     local type, err = validateArithmetic(param.val, scope)
+    if err > 0 then
+      return 1
+    end
     local _, typeErr = compareTypes(fcn.params[i].ctype, type)
-    if err + typeErr > 0 then
+    if typeErr > 0 then
       return 1
     end
     v1, v2 = isPrimitive(fcn.params[i].ctype), isPrimitive(type)

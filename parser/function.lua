@@ -4,12 +4,19 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
+
+local function populateParams(list, params)
+  for _, val in ipairs(params) do
+    table.insert(list, val)
+  end
+end
+
 --[[
   Parses and validates a function.
   Returns:
     Error code, 0 if successful
     Parsed function
-]]
+--]]
 function parseFunction(fcn, scope)
   --TODO: add to file, global or function variable scope
 
@@ -18,30 +25,27 @@ function parseFunction(fcn, scope)
   if fcn.scope == "local" then
     if scope.func ~= nil then
       scope.func.variables[fcn.name] = {type = "function", params = {}, returns = fcn.returns}
-      for _, val in ipairs(fcn.params) do
-        table.insert(scope.func.variables[fcn.name].params, val)
-      end
+      populateParams(scope.func.variables[fcn.name].params, fcn.params)
     else
       scope.file.variables[fcn.name] = {type = "function", params = {}, returns = fcn.returns}
-      for _, val in ipairs(fcn.params) do
-        table.insert(scope.file.variables[fcn.name].params, val)
-      end
+      populateParams(scope.file.variables[fcn.name].params, fcn.params)
     end
     table.insert(assignment, "local ")
   elseif scope.func ~= nil then
       print("ERROR: nested function declared with global scope")
-      return 1
+      return nil, 1
   else
     scope.global.variables[fcn.name] = {type = "function", params = {}, returns = fcn.returns}
-    for _, val in ipairs(fcn.params) do
-      table.insert(scope.global.variables[fcn.name].params, val)
-    end
+    populateParams(scope.global.variables[fcn.name].params, fcn.params)
   end
   table.insert(assignment, fcn.name)
   table.insert(assignment, " = function")
+
   --Define a new func scope
   scope.func = {variables = {}, name = fcn.name, params = {}, returns = fcn.returns, func = scope.func}
-
+  for _, val in ipairs(fcn.params) do
+    scope.func.variables[val.name] = val.ctype
+  end
 
 
   --Parse and check header
@@ -65,9 +69,10 @@ function parseFunction(fcn, scope)
     table.insert(nTree, "main()")
   end
 
+  print(inspect(scope))
   --Dereference func from the namespace since we are done with it
   scope.func = scope.func.func.func
-  return err + err1, table.concat(nTree, "\n")
+  return table.concat(nTree, "\n"), err + err1
 end
 
 --[[
@@ -163,7 +168,7 @@ function parseFunctionBody(body, scope)
       err, tree = parseReturn(line, scope)
       table.insert(nTree, tree)
     else
-      local err1, val = parseLine(line, scope)
+      local val, err1 = parseLine(line, scope)
       if err1 > 0 then
         return err1
       end

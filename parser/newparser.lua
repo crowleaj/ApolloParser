@@ -21,19 +21,32 @@ function parseDeclaration(line)
 end
 
 --[[
-    Parses and validates a statement with respect to its current scope.
+    Validates and parses a statement with respect to its current scope.
+    Does not run parser if validator fails.
     Returns:
-        Error code, 0 if successful
         Parsed statement
+        Error code, 0 if successful
 ]]
 function parseLine(line, scope)
     local type = line.type
     if type == "declaration" then
-        return checkDeclaration(line, scope), parseDeclaration(line)
+        local err = checkDeclaration(line, scope)
+        if err > 0 then
+          return nil, err
+        end
+        return parseDeclaration(line), err
     elseif type == "assignment" then
-        return checkAssignment(line, scope), parseAssignment(line, scope)
+        local err = checkAssignment(line, scope)
+        if err > 0 then
+          return nil, err
+        end
+        return parseAssignment(line, scope), err
     elseif type == "declassignment" then
-        return checkDeclaration(line, scope) + checkAssignment(line, scope), parseAssignment(line)
+      local err = checkDeclaration(line, scope) + checkAssignment(line, scope)
+      if err > 0 then
+        return nil, err
+      end
+        return parseAssignment(line), err
     elseif type == "function" then
         --Functions checked as a declaration, functions are first class!
         return parseFunction(line, scope)
@@ -42,14 +55,18 @@ function parseLine(line, scope)
           for _, val in ipairs(line.params) do
             table.insert(scope.global.variables[line.name].params, val)
           end
-        return 0
+        return nil, 0
     elseif type == "functioncall" then
-      return checkFunctionCall(line, scope), parseValue(line)
+      local err = checkFunctionCall(line, scope)
+      if err > 0 then
+        return nil, err
+      end
+      return parseValue(line), 0
     elseif type == "comment" then
-        return 0
+        return nil, 0
     else
         print("ERROR: unrecognized instruction " .. type)
-        return 1
+        return nil, 1
     end
 end
 
@@ -67,7 +84,7 @@ function parseFile(file, scope)
 
     --Parse body
     for _, line in ipairs(file) do
-        local err, parsed = parseLine(line, scope)
+        local parsed, err = parseLine(line, scope)
         if err > 0 then
             return err
         else

@@ -96,7 +96,7 @@ return lpeg.P{
     function(val) return {type = "parentheses", val = val} end,
   larith = (ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws * (loperation * ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws)^0)/
     function(...) return {type = "arithmetic", val = {...}} end,
-
+  
   lbody = lpeg.Ct(
     "{" * ws *
     (((lpeg.V"S" + lpeg.V"lassignment") * ws)^0) * ws *

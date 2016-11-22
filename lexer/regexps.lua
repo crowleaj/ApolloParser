@@ -45,13 +45,29 @@ lval = lconst + lvar
 lnumval = lnum + lvar
 
 --VARIABLE TYPES
-llocalvar = lvarnorm/function(val) return {type = "flat", ctype = val.val} end
+lvartype = lpeg.P{
+  "type",
 
-larray = ("()" * lvarnorm)/function(val) return {type = "array", ctype = val.val} end
+  type = lpeg.V"array" + lpeg.V"list" + lpeg.V"map" + lpeg.V"flat",
 
-lmap = ("[]" * lvarnorm)/function(val) return {type = "map", ctype = val.val} end
+  flat = lvarnorm/function(val) return {type = "flat", ctype = val.val} end,
 
-lvartype = lmap + larray + llocalvar
+  array = ("[]" * (lpeg.V"type"))/function(val) return {type = "array", ctype = val} end,
+
+  list = ("()" * (lpeg.V"type"))/function(val) return {type = "list", ctype = val} end,
+
+  map = ("{}" * (lpeg.V"type"))/function(val) return {type = "map", ctype = val} end
+}
+
+-- llocalvar = lvarnorm/function(val) return {type = "flat", ctype = val.val} end
+--
+-- larray = ("[]" * (lvartype^1))/function(val) return {type = "array", ctype = val} end
+--
+-- llist = ("()" * (lvartype^1))/function(val) return {type = "list", ctype = val} end
+--
+-- lmap = ("{}" * (lvartype^1))/function(val) return {type = "map", ctype = val} end
+--
+-- lvartype = larray + llist + lmap + llocalvar
 
 --SCOPE SPECIFIERS
 llocal = ("var" * ws)/"local"

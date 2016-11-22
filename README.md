@@ -1,5 +1,5 @@
 # ApolloParser
-Parser for the Nitro programming language implemented in Lua
+Parser for the Apollo programming language implemented in Lua
 
 ## Running the Parser (ZeroBrane studio recommended)
 
@@ -14,11 +14,19 @@ Parser for the Nitro programming language implemented in Lua
 - Arithmetic
 - Function calls, not as assignment or in arithmetic
 - Includes
+- Function in arithmetic
 
 ## Language Roadmap
-- Function assignments
-- Function in arithmetic
+- Function assignments with multiple returns
+- Multi assignments
 - Array and Map support
+
+## Design Considerations
+- In allowing type Any, performance in collections may be hindered by not knowing types ahead of time
+
+## Implementation Ideas
+- Optimization of primitives to machine code, classes get gc
+-
 
 Lexer:
 
