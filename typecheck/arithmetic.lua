@@ -25,6 +25,26 @@ function validateArithmetic(exp, scope)
       return nil, 1
     end
     return fcn.returns[1], validateFunctionCall(exp, scope)
+  elseif type == "array" then
+    if #exp.val == 0 then
+      print("ERROR: no elements in array")
+      return nil, 1
+    end
+    local e1
+    type = validateArithmetic(exp.val[1], scope)
+    for index, arrExp in ipairs(exp.val) do
+      resType, e1 = validateArithmetic(arrExp, scope)
+      if e1 > 0 then
+        print("ERROR: problem validating array element " .. index)
+        break
+      end
+      type, e1 = compareTypes(type, resType)
+      if e1 > 0 then
+        print("ERROR: problem comparinrg array elements")
+        break
+      end
+    end
+    return {type = "array", ctype = type}, e1
   else
     local prec = exp.precedence
     if prec == 10 then

@@ -96,7 +96,7 @@ return lpeg.P{
     function(val) return {type = "parentheses", val = val} end,
   larith = (ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws * (loperation * ws * (lnotneg^-1) * ws * (lpeg.V"lparens" + lpeg.V"lrhs") * ws)^0)/
     function(...) return {type = "arithmetic", val = {...}} end,
-  
+
   lbody = lpeg.Ct(
     "{" * ws *
     (((lpeg.V"S" + lpeg.V"lassignment") * ws)^0) * ws *
@@ -119,6 +119,10 @@ return lpeg.P{
   lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
     function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
 
-  lrhs = (lpeg.V"lclassreference"  + lpeg.V"lfunccall" + lval),
+  lrhs = (lpeg.V"lclassreference"  + lpeg.V"lfunccall" + lpeg.V"larray" + lval),
   --+ lpeg.V"ltablelookup"
+
+  -- ARRAY ASSIGNMENTS
+  larray = ("[" * ws * lpeg.V"lcommaseparatedvalues"  * "]" * ws)/
+    function(vals) return {type = "array", val = vals.val} end,
 }

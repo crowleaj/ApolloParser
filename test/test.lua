@@ -1,7 +1,7 @@
 require "parser"
 
 
-runfile("capabilities/03_calls",true)
+runfile("capabilities/04_arrays",true)
 
 --[[
 A = {

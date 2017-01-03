@@ -69,7 +69,7 @@ function parseFunction(fcn, scope)
     table.insert(nTree, "main()")
   end
 
-  print(inspect(scope))
+  --print(inspect(scope))
   --Dereference func from the namespace since we are done with it
   scope.func = scope.func.func.func
   return table.concat(nTree, "\n"), err + err1
@@ -129,8 +129,8 @@ function parseReturn(line, scope)
     return 1
   end
   for i, ret in ipairs(line.val) do
-    ret.val = parseArithmeticTree(Tokenizer.new(ret.val),1)
-    local type, err = validateArithmetic(ret.val, scope)
+    line.val[i] = parseArithmeticTree(Tokenizer.new(ret.val),1)
+    local type, err = validateArithmetic(line.val[i], scope)
     local _, typeErr = compareTypes(returns[i], type)
     if err + typeErr > 0 then
       return 1

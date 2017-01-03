@@ -15,6 +15,11 @@ Parser for the Apollo programming language implemented in Lua
 - Function calls, not as assignment or in arithmetic
 - Includes
 - Function in arithmetic
+- Array Assignment/Declaration
+
+## Pipeline
+- Array updating, retrieval of elements
+- Functions as assignments and in arithmetic
 
 ## Language Roadmap
 - Function assignments with multiple returns
@@ -25,8 +30,7 @@ Parser for the Apollo programming language implemented in Lua
 - In allowing type Any, performance in collections may be hindered by not knowing types ahead of time
 
 ## Implementation Ideas
-- Optimization of primitives to machine code, classes get gc
--
+- Optimization of primitives to machine code, classes get gc'd
 
 Lexer:
 

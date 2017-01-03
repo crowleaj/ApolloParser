@@ -39,7 +39,7 @@ function compareTypes(t1, t2)
   if  (prim1 and not prim2) or (not prim1 and prim2) then
     print("ERROR: attempt to mix primitive and non-primitive")
     return t1, 1
-  elseif prim1 and prim2 then
+  elseif (prim1 and prim2) > 0 then
     if prim1 == -1 or prim2 == -1 then
       print("ERROR: attempt to mix number with string type")
       return prim1, 1
@@ -48,5 +48,11 @@ function compareTypes(t1, t2)
       return t1, 0
     end
     return t2, 0
+  else
+    if t1.type ~= t2.type then
+      print("ERROR attempt to mix " .. t1.type .. " with " .. t2.type)
+      return t1, 1
+    end
+    return compareTypes(t1.ctype, t2.ctype)
   end
 end

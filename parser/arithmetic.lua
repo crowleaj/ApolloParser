@@ -12,6 +12,9 @@ function parseArithmetic(rhs)
     return parseValue(rhs)
   elseif type == "functioncall" then
     return parseValue(rhs)
+  elseif type == "array" then
+  --  print(inspect(rhs))
+    return "{" .. parseValues(rhs.val) .. "}"
   else
     if rhs.precedence < 7 or rhs.precedence == 11 then
         return rhs.op .. "(" .. parseArithmetic(rhs.lhs) .. ", "  .. parseArithmetic(rhs.rhs) .. ")"
@@ -32,6 +35,11 @@ function parseAtom(tokens)
   if current.type == "parentheses" then
     current.val = parseArithmeticTree(Tokenizer.new(current.val.val), 1)
     Tokenizer.next(tokens)
+    return current, 0
+  elseif current.type == "array" then
+    for k, _ in ipairs(current.val) do
+      current.val[k] = parseArithmeticTree(Tokenizer.new(current.val[k].val), 1)
+    end
     return current, 0
   elseif current.type == "operation" then
     --Unary operator

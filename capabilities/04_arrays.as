@@ -1,6 +1,7 @@
 /*
 A language simply with support of file and global scopes,
-variable and function declarations, function bodies, arithmetic and assignments
+variable and function declarations, function bodies, arithmetic, assignments
+and arrays of any dimension
 Function calls, but not in assignments or arithmetic
 */
 
@@ -21,7 +22,7 @@ func mult(a number, b number) {
 
 func main(){
     //add(5, 6)
-    var k []()int // = [1, 2, 3]
+    var k []int  = [1 + 2, 2, 3]
     var x int = 5
     var hi int = 5 + 2 * 3
     var y char = -2^4^-(x >> 4)//3 * -b//(6 + 5)

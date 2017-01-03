@@ -4,12 +4,12 @@
 --Licensed under the MIT license
 --See LICENSE file for terms
 
-function parseValues(vars, scope)
+function parseValues(vars)
   local nTree = {}
   --table.insert(nTree, "(")
     local args = {}
     for _,v in ipairs(vars) do
-    table.insert(args, parseValue(v, scope))
+    table.insert(args, parseArithmetic(v))
   end
   table.insert(nTree, table.concat(args,","))
   --table.insert(nTree, ")")
