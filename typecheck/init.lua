@@ -36,7 +36,7 @@ end
 function compareTypes(t1, t2)
   local prim1 = isPrimitive(t1)
   local prim2 = isPrimitive(t2)
-  if  (prim1 and not prim2) or (not prim1 and prim2) then
+  if (prim1 > 0 and prim2 <= 0) or ((prim1 <= 0) and prim2 > 0) then
     print("ERROR: attempt to mix primitive and non-primitive")
     return t1, 1
   elseif (prim1 and prim2) > 0 then

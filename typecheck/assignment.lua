@@ -21,13 +21,8 @@ function checkAssignment(line, scope)
   end
   local _, assignErr = compareTypes(var, type)
   if assignErr > 0 then
+    print("Error in assignment of " .. line.name)
     return assignErr
-  end
-  v1, v2 = isPrimitive(var), isPrimitive(type)
-  if v1 and v2 then
-    if v1 < v2 then
-      print("WARNING: Potential loss of precision converting assignment of " .. line.name .. " from " .. type.ctype .. " to " .. var.ctype)
-    end
   end
   return 0
 end
