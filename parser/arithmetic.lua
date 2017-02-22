@@ -15,6 +15,15 @@ function parseArithmetic(rhs)
   elseif type == "array" then
   --  print(inspect(rhs))
     return "{" .. parseValues(rhs.val) .. "}"
+  elseif type == "arrayref" then
+    print(inspect(rhs))
+    local nTree = {rhs.array}
+    for _, v in ipairs(rhs.val) do
+      table.insert(nTree, parseArithmetic(v))
+    end
+    return table.concat(nTree)
+  elseif type == "index" then
+    return "[" .. parseArithmetic(rhs.val)  .. "]"
   else
     if rhs.precedence < 7 or rhs.precedence == 11 then
         return rhs.op .. "(" .. parseArithmetic(rhs.lhs) .. ", "  .. parseArithmetic(rhs.rhs) .. ")"

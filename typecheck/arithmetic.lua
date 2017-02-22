@@ -45,6 +45,28 @@ function validateArithmetic(exp, scope)
       end
     end
     return {type = "array", ctype = type}, e1
+  elseif type == "arrayref" then
+    local currentType = resolveVariable(exp.array, scope)
+    for _, v in ipairs(exp.val) do
+      if v.type == "index" then
+        if currentType.type ~= "array" then
+          print("ERROR: problem accessing array index in array " .. exp.array)
+          return nil, 1
+        else 
+          currentType = currentType.ctype
+        end
+        local t1, err = validateArithmetic(v.val, scope)
+        if err > 0 then
+          return nil, err
+        end
+        _, err = compareTypes({ctype = "int", type = "flat"}, t1)
+        if err > 0 then
+          return nil, err
+        end
+      end
+    end
+    return currentType, 0
+
   else
     local prec = exp.precedence
     if prec == 10 then

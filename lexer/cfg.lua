@@ -119,10 +119,16 @@ return lpeg.P{
   lclassfunction = (":" * lvar * lpeg.V"lfunccallparams")/
     function(val, args) return {type = "classmethodcall", val = val.val, args = args} end,
 
-  lrhs = (lpeg.V"lclassreference"  + lpeg.V"lfunccall" + lpeg.V"larray" + lval),
+  lrhs = (lpeg.V"lclassreference"  + lpeg.V"lfunccall" + lpeg.V"larrayRef" + lpeg.V"larray" + lval),
   --+ lpeg.V"ltablelookup"
 
   -- ARRAY ASSIGNMENTS
   larray = ("[" * ws * lpeg.V"lcommaseparatedvalues"  * "]" * ws)/
     function(vals) return {type = "array", val = vals.val} end,
+  
+  larrayRef = (lvarnorm * (lpeg.V"larrayIndex")^1) / 
+    function (array, ...) return {type = "arrayref", array = array.val, val = {...}} end,
+   
+  larrayIndex = ("[" * ws * lpeg.V"lrhs" * ws * "]")/
+    function (val) return {type = "index", val = val} end,
 }

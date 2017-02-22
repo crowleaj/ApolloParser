@@ -17,6 +17,7 @@ function checkAssignment(line, scope)
   end
   local type, err = validateArithmetic(line.val, scope)
   if err > 0 then
+    print("Error in rhs for assignment of " .. line.name)
     return err
   end
   local _, assignErr = compareTypes(var, type)
